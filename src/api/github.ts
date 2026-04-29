@@ -1,0 +1,199 @@
+import { getEtag, peek, setEtag } from "./cache";
+import type {
+  ApiError,
+  DailyDigestsData,
+  DependentItem,
+  ForkNode,
+  IssuesData,
+  MentionCodeItem,
+  MentionIssueItem,
+  PageInfo,
+  ProjectDetails,
+  ProjectSummary,
+  PullRequestsData,
+  RepoDetailsData,
+  RepoInsightsData,
+  ReposData,
+  RepoTrafficDetails,
+  StargazerNode,
+} from "../types/github";
+
+export class AuthRequiredClientError extends Error {
+  constructor(message = "authentication required") {
+    super(message);
+    this.name = "AuthRequiredClientError";
+  }
+}
+
+async function readJson<T>(url: string, init?: RequestInit, cacheKey?: string): Promise<T> {
+  const headers = new Headers(init?.headers);
+  if (cacheKey) {
+    const prior = getEtag(cacheKey);
+    if (prior) headers.set("If-None-Match", prior);
+  }
+  const response = await fetch(url, { cache: "no-store", ...init, headers });
+  if (response.status === 304 && cacheKey) {
+    const cached = peek<T>(cacheKey);
+    if (cached) return cached;
+  }
+  const json = (await response.json()) as T | (ApiError & { needsAuth?: boolean });
+  const maybeError = json as Partial<ApiError> & { needsAuth?: boolean };
+  if (response.status === 401 || maybeError.needsAuth) {
+    throw new AuthRequiredClientError(maybeError.error || "authentication required");
+  }
+  if (!response.ok || maybeError.ok === false) {
+    throw new Error(maybeError.error || `Request failed: ${response.status}`);
+  }
+  if (cacheKey) {
+    const newEtag = response.headers.get("ETag");
+    if (newEtag) setEtag(cacheKey, newEtag);
+  }
+  return json as T;
+}
+
+function withSignal(signal?: AbortSignal): RequestInit | undefined {
+  return signal ? { signal } : undefined;
+}
+
+export interface AuthStatus {
+  ok: true;
+  authenticated: boolean;
+  login: string | null;
+  scope: string | null;
+  clientIdConfigured: boolean;
+}
+
+export interface DeviceFlowStart {
+  ok: true;
+  userCode: string;
+  verificationUri: string;
+  expiresIn: number;
+  interval: number;
+}
+
+export type DeviceFlowPoll =
+  | { ok: true; status: "pending" | "throttled" | "expired" | "denied" }
+  | { ok: true; status: "ok"; login: string }
+  | { ok: true; status: "error"; error: string };
+
+export function fetchAuthStatus(): Promise<AuthStatus> {
+  return readJson<AuthStatus>("/api/auth/status");
+}
+
+export function startAuthFlow(): Promise<DeviceFlowStart> {
+  return readJson<DeviceFlowStart>("/api/auth/start", { method: "POST" });
+}
+
+export function pollAuthFlow(): Promise<DeviceFlowPoll> {
+  return readJson<DeviceFlowPoll>("/api/auth/poll", { method: "POST" });
+}
+
+export function logoutAuth(): Promise<{ ok: true }> {
+  return readJson<{ ok: true }>("/api/auth/logout", { method: "POST" });
+}
+
+export function fetchRepos(fresh = false, signal?: AbortSignal): Promise<ReposData> {
+  return readJson<ReposData>(`/api/repos${fresh ? "?fresh=1" : ""}`, withSignal(signal), "/api/repos");
+}
+
+export function fetchIssues(fresh = false, signal?: AbortSignal): Promise<IssuesData> {
+  return readJson<IssuesData>(`/api/issues${fresh ? "?fresh=1" : ""}`, withSignal(signal), "/api/issues");
+}
+
+export function fetchPullRequests(fresh = false, signal?: AbortSignal): Promise<PullRequestsData> {
+  return readJson<PullRequestsData>(`/api/prs${fresh ? "?fresh=1" : ""}`, withSignal(signal), "/api/prs");
+}
+
+export function fetchStargazers(params: {
+  repo: string;
+  cursor?: string | null;
+  direction: "ASC" | "DESC";
+}): Promise<{ ok: true; totalCount: number; pageInfo: PageInfo; edges: StargazerNode[] }> {
+  const query = new URLSearchParams({ repo: params.repo, direction: params.direction });
+  if (params.cursor) query.set("cursor", params.cursor);
+  return readJson(`/api/stargazers?${query.toString()}`);
+}
+
+export function fetchForks(params: {
+  repo: string;
+  cursor?: string | null;
+  direction: "ASC" | "DESC";
+  field: string;
+}): Promise<{ ok: true; totalCount: number; pageInfo: PageInfo; nodes: ForkNode[] }> {
+  const query = new URLSearchParams({ repo: params.repo, direction: params.direction, field: params.field });
+  if (params.cursor) query.set("cursor", params.cursor);
+  return readJson(`/api/forks?${query.toString()}`);
+}
+
+export function fetchRepoDetails(repo: string): Promise<RepoDetailsData> {
+  const query = new URLSearchParams({ repo });
+  return readJson(`/api/repo-details?${query.toString()}`);
+}
+
+export function fetchMentionIssues(repo: string): Promise<{ ok: true; items: MentionIssueItem[]; totalCount: number; aliases: string[] }> {
+  const query = new URLSearchParams({ repo });
+  return readJson(`/api/mentions/issues?${query.toString()}`);
+}
+
+export function fetchMentionCode(repo: string): Promise<{ ok: true; items: MentionCodeItem[]; totalCount: number; aliases: string[] }> {
+  const query = new URLSearchParams({ repo });
+  return readJson(`/api/mentions/code?${query.toString()}`);
+}
+
+export function fetchRepoAliases(repo: string): Promise<{ ok: true; aliases: string[] }> {
+  const query = new URLSearchParams({ repo });
+  return readJson(`/api/repo-aliases?${query.toString()}`);
+}
+
+export function addRepoAlias(repo: string, alias: string): Promise<{ ok: true; aliases: string[] }> {
+  const query = new URLSearchParams({ repo });
+  return readJson(`/api/repo-aliases?${query.toString()}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ alias }),
+  });
+}
+
+export function removeRepoAlias(repo: string, alias: string): Promise<{ ok: true; aliases: string[] }> {
+  const query = new URLSearchParams({ repo, alias });
+  return readJson(`/api/repo-aliases?${query.toString()}`, { method: "DELETE" });
+}
+
+export function fetchDependents(repo: string): Promise<{ ok: true; items: DependentItem[]; totalRepos: number; notAvailable: boolean }> {
+  const query = new URLSearchParams({ repo });
+  return readJson(`/api/mentions/dependents?${query.toString()}`);
+}
+
+export function fetchRepoTraffic(repo: string): Promise<RepoTrafficDetails> {
+  const query = new URLSearchParams({ repo });
+  return readJson(`/api/mentions/referrers?${query.toString()}`);
+}
+
+export function fetchRepoInsights(fresh = false, signal?: AbortSignal): Promise<RepoInsightsData> {
+  return readJson(`/api/repo-insights${fresh ? "?fresh=1" : ""}`, withSignal(signal), "/api/repo-insights");
+}
+
+export function fetchDailyDigests(signal?: AbortSignal): Promise<DailyDigestsData> {
+  return readJson("/api/daily-digests", withSignal(signal), "/api/daily-digests");
+}
+
+export function fetchProjects(): Promise<{ ok: true; projects: ProjectSummary[] }> {
+  return readJson("/api/projects");
+}
+
+export function fetchProject(id: string): Promise<{ ok: true; project: ProjectDetails }> {
+  return readJson(`/api/project?id=${encodeURIComponent(id)}`);
+}
+
+export function moveProjectItem(payload: {
+  projectId: string;
+  itemId: string;
+  fieldId: string;
+  optionId: string | null;
+}): Promise<{ ok: true }> {
+  return readJson("/api/project/move", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+}

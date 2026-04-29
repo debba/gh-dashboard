@@ -1,0 +1,33 @@
+import { describe, expect, it } from "vitest";
+import {
+  getOwner,
+  getRepositoryName,
+  nameWithOwnerFromApiUrl,
+  parseRepositoryName,
+} from "../../src/utils/repository";
+
+describe("repository utilities", () => {
+  it("parses valid repository identifiers", () => {
+    expect(parseRepositoryName("openai/codex")).toEqual(["openai", "codex"]);
+    expect(parseRepositoryName("owner.name/repo-name_1")).toEqual(["owner.name", "repo-name_1"]);
+  });
+
+  it("rejects invalid repository identifiers", () => {
+    expect(parseRepositoryName(null)).toBeNull();
+    expect(parseRepositoryName("missing-slash")).toBeNull();
+    expect(parseRepositoryName("too/many/parts")).toBeNull();
+  });
+
+  it("splits nameWithOwner values", () => {
+    expect(getOwner("openai/codex")).toBe("openai");
+    expect(getRepositoryName("openai/codex")).toBe("codex");
+  });
+
+  it("extracts nameWithOwner from a repository API url", () => {
+    expect(nameWithOwnerFromApiUrl("https://api.github.com/repos/openai/codex")).toBe("openai/codex");
+  });
+
+  it("returns the input unchanged when it is not a repository API url", () => {
+    expect(nameWithOwnerFromApiUrl("openai/codex")).toBe("openai/codex");
+  });
+});

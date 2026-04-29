@@ -1,0 +1,174 @@
+  /* Kanban board */
+  .kanban-toolbar {
+    display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 12px;
+  }
+  .kproj-select {
+    background: var(--panel); border: 1px solid var(--border); color: var(--text);
+    padding: 8px 12px; border-radius: 8px; font-size: 13px; cursor: pointer;
+    min-height: 36px; min-width: 260px; max-width: 100%;
+  }
+  .kanban-meta {
+    font-size: 12px; color: var(--muted);
+    background: var(--panel); border: 1px solid var(--border); padding: 6px 10px; border-radius: 8px;
+  }
+  .kanban-meta a { color: var(--accent-2); }
+  .kanban-info-banner {
+    margin: 10px 0 14px; padding: 14px 16px; border-radius: 10px;
+    background: rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.3);
+    color: var(--text); font-size: 13px; line-height: 1.5;
+  }
+  .kanban-info-banner code {
+    background: var(--panel-2); border: 1px solid var(--border); padding: 2px 8px; border-radius: 5px;
+    font-family: ui-monospace, Menlo, monospace; font-size: 12px;
+  }
+  .kanban-info-banner.accent {
+    background: var(--accent-faint); border-color: var(--accent-border);
+  }
+
+  .kanban-board {
+    display: flex; gap: 12px; overflow-x: auto;
+    padding-bottom: 10px; scrollbar-width: thin;
+    align-items: flex-start;
+    min-height: 300px;
+  }
+  .view-kanban:fullscreen {
+    background: var(--bg);
+    color: var(--text);
+    padding: 0;
+    overflow: auto;
+  }
+  .kcol {
+    flex: 0 0 300px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    display: flex; flex-direction: column;
+    max-height: calc(100vh - 320px);
+    min-height: 180px;
+    transition: border-color .15s, background .15s;
+  }
+  .kcol.drag-over {
+    border-color: var(--accent);
+    background: linear-gradient(180deg, var(--panel), var(--accent-faint));
+  }
+  .kcol-head {
+    padding: 12px 14px; border-bottom: 1px solid var(--border-soft);
+    display: flex; align-items: center; gap: 8px;
+    background: var(--panel); border-radius: 12px 12px 0 0;
+    position: sticky; top: 0; z-index: 1;
+  }
+  .kcol-head .dot { width: 10px; height: 10px; border-radius: 50%; flex: 0 0 auto; box-shadow: 0 0 0 2px var(--panel); }
+  .kcol-head h4 { margin: 0; font-size: 13px; font-weight: 700; color: var(--text); }
+  .kcol-head .count {
+    margin-left: auto; font-size: 11px; color: var(--muted);
+    background: var(--panel-2); border: 1px solid var(--border-soft);
+    padding: 1px 8px; border-radius: 999px; font-variant-numeric: tabular-nums;
+  }
+  .kcol-body {
+    padding: 8px; flex: 1; overflow-y: auto;
+    display: flex; flex-direction: column; gap: 8px;
+    min-height: 80px;
+  }
+  .kcol-empty {
+    text-align: center; color: var(--muted-2); font-size: 11.5px;
+    padding: 16px 8px; border: 1px dashed var(--border-soft); border-radius: 8px;
+    margin: 4px;
+  }
+
+  .kcard {
+    background: var(--panel-2); border: 1px solid var(--border-soft); border-radius: 10px;
+    padding: 10px 12px; cursor: grab; user-select: none;
+    transition: border-color .1s, transform .1s, opacity .15s, box-shadow .15s;
+    position: relative;
+  }
+  .kcard:hover { border-color: var(--accent); box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+  .kcard:active { cursor: grabbing; }
+  .kcard.dragging { opacity: 0.35; transform: rotate(-1deg); }
+  .kcard a, .kcard img {
+    -webkit-user-drag: none;
+    user-drag: none;
+  }
+  .kcard.pending { opacity: 0.6; pointer-events: none; }
+  .kcard.pending::after {
+    content: ""; position: absolute; top: 8px; right: 8px;
+    width: 10px; height: 10px; border-radius: 50%;
+    background: var(--warn); box-shadow: 0 0 0 2px var(--panel-2);
+    animation: wfPulse 1.2s ease-in-out infinite;
+  }
+  .kcard-repo {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 10.5px; color: var(--muted); margin-bottom: 4px;
+    display: flex; align-items: center; gap: 6px;
+    overflow: hidden;
+  }
+  .kcard-repo .owner-name {
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0;
+  }
+  .kcard-type {
+    font-size: 9.5px; text-transform: uppercase; letter-spacing: 0.06em; font-weight: 700;
+    padding: 1px 5px; border-radius: 3px; flex: 0 0 auto;
+  }
+  .kcard-type.Issue    { color: #86efac; background: rgba(34,197,94,0.14); border: 1px solid rgba(34,197,94,0.3); }
+  .kcard-type.PullRequest { color: var(--active-start); background: var(--accent-soft); border: 1px solid var(--accent-border); }
+  .kcard-type.DraftIssue { color: var(--muted); background: var(--panel-3); border: 1px solid var(--border-soft); }
+  .kcard-title {
+    font-size: 13px; font-weight: 600; color: var(--text); line-height: 1.35;
+    word-break: break-word;
+  }
+  .kcard-title a { color: var(--text); }
+  .kcard-title a:hover { color: var(--accent-2); text-decoration: none; }
+  .kcard-labels { margin-top: 6px; display: flex; flex-wrap: wrap; gap: 3px; }
+  .kcard-meta {
+    margin-top: 8px; display: flex; align-items: center; gap: 6px;
+    font-size: 11px; color: var(--muted);
+  }
+  .kcard-avatars { display: flex; margin-left: auto; }
+  .kcard-avatars img {
+    width: 20px; height: 20px; border-radius: 50%; border: 1.5px solid var(--panel-2);
+    margin-left: -5px; background: var(--panel-3);
+  }
+
+  .ktoast {
+    position: fixed; bottom: 20px; right: 20px; z-index: 1000;
+    background: var(--panel); border: 1px solid var(--danger);
+    color: #fecaca; padding: 10px 14px; border-radius: 8px;
+    font-size: 13px; max-width: 360px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+    animation: toastIn .2s ease-out;
+  }
+  @keyframes toastIn { from { opacity: 0; transform: translateY(8px); } }
+  .ktoast.ok { border-color: var(--success); color: #bbf7d0; }
+
+  /* Board focus (distraction-free) mode */
+  body.board-focus .topbar,
+  body.board-focus .sidebar,
+  body.board-focus .sidebar-backdrop,
+  body.board-focus .view-head { display: none !important; }
+  body.board-focus .layout {
+    grid-template-columns: 1fr;
+    padding: 0;
+    max-width: none;
+    gap: 0;
+    height: 100vh;
+  }
+  body.board-focus .main { padding: 0; min-height: 100vh; }
+  body.board-focus .view-kanban { padding: 0; }
+  body.board-focus .kanban-toolbar {
+    padding: 10px 16px;
+    margin: 0;
+    border-bottom: 1px solid var(--border);
+    background: var(--panel);
+    position: sticky; top: 0; z-index: 10;
+    backdrop-filter: saturate(140%) blur(10px);
+    -webkit-backdrop-filter: saturate(140%) blur(10px);
+  }
+  body.board-focus .kanban-board {
+    padding: 16px;
+    max-height: none;
+    min-height: calc(100vh - 56px);
+  }
+  body.board-focus .kcol {
+    max-height: calc(100vh - 100px);
+  }
+
+  .board-fullscreen-btn { flex: 0 0 auto; }
