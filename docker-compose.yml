@@ -8,7 +8,9 @@ services:
       - "8765:8765"
     environment:
       GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID:?set GITHUB_CLIENT_ID in env or .env}
-      # GITHUB_OAUTH_SCOPES: "repo read:org project read:user user:email"
+      GITHUB_OAUTH_SCOPES: ${GITHUB_OAUTH_SCOPES:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OPENAI_DIGEST_MODEL: ${OPENAI_DIGEST_MODEL:-}
     volumes:
       - gh-dashboard-data:/home/node/.gh-issues-dashboard
 

@@ -181,7 +181,14 @@ A multi-stage `Dockerfile` and a `docker-compose.yml` are provided. The image bu
 With Docker Compose (recommended):
 
 ```bash
-echo 'GITHUB_CLIENT_ID=Iv1.xxxxxxxxxxxxxxxx' > .env
+cat > .env <<'EOF'
+GITHUB_CLIENT_ID=Iv1.xxxxxxxxxxxxxxxx
+# Optional — enables AI-generated daily digest narratives
+OPENAI_API_KEY=sk-...
+# Optional overrides
+# OPENAI_DIGEST_MODEL=gpt-4.1-mini
+# GITHUB_OAUTH_SCOPES=repo read:org project read:user user:email
+EOF
 docker compose up -d --build
 # open http://127.0.0.1:8765
 ```
@@ -193,11 +200,12 @@ docker build -t gh-dashboard .
 docker run -d --name gh-dashboard \
   -p 8765:8765 \
   -e GITHUB_CLIENT_ID=Iv1.xxxxxxxxxxxxxxxx \
+  -e OPENAI_API_KEY=sk-... \
   -v gh-dashboard-data:/home/node/.gh-issues-dashboard \
   gh-dashboard
 ```
 
-The container sets `HOST=0.0.0.0` so the server is reachable from outside. To wipe the stored token (full logout) remove the volume: `docker volume rm gh-dashboard-data`.
+The container forwards `GITHUB_CLIENT_ID`, `GITHUB_OAUTH_SCOPES`, `OPENAI_API_KEY` and `OPENAI_DIGEST_MODEL` from the host environment (or `.env` with Compose) — see [Configuration](#configuration) for the full list. It sets `HOST=0.0.0.0` so the server is reachable from outside. To wipe the stored token (full logout) remove the volume: `docker volume rm gh-dashboard-data`.
 
 ## Test & type-check
 
