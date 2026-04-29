@@ -174,6 +174,31 @@ Then open <http://127.0.0.1:8765>.
 
 `npm run preview` is also available if you want to preview only the static frontend through Vite (no backend).
 
+## Run with Docker
+
+A multi-stage `Dockerfile` and a `docker-compose.yml` are provided. The image builds the server + SPA bundle and runs as a non-root user; tokens and snapshots are persisted to a named volume mounted at `/home/node/.gh-issues-dashboard`.
+
+With Docker Compose (recommended):
+
+```bash
+echo 'GITHUB_CLIENT_ID=Iv1.xxxxxxxxxxxxxxxx' > .env
+docker compose up -d --build
+# open http://127.0.0.1:8765
+```
+
+With plain Docker:
+
+```bash
+docker build -t gh-dashboard .
+docker run -d --name gh-dashboard \
+  -p 8765:8765 \
+  -e GITHUB_CLIENT_ID=Iv1.xxxxxxxxxxxxxxxx \
+  -v gh-dashboard-data:/home/node/.gh-issues-dashboard \
+  gh-dashboard
+```
+
+The container sets `HOST=0.0.0.0` so the server is reachable from outside. To wipe the stored token (full logout) remove the volume: `docker volume rm gh-dashboard-data`.
+
 ## Test & type-check
 
 ```bash

@@ -1,0 +1,16 @@
+services:
+  gh-dashboard:
+    build: .
+    image: gh-dashboard:latest
+    container_name: gh-dashboard
+    restart: unless-stopped
+    ports:
+      - "8765:8765"
+    environment:
+      GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID:?set GITHUB_CLIENT_ID in env or .env}
+      # GITHUB_OAUTH_SCOPES: "repo read:org project read:user user:email"
+    volumes:
+      - gh-dashboard-data:/home/node/.gh-issues-dashboard
+
+volumes:
+  gh-dashboard-data:
