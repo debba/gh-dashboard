@@ -52,4 +52,4 @@ Early scaffolding. APIs, modules, and the UI are still being shaped — expect r
 
 ## License
 
-Apache License 2.0
+MIT License — see [LICENSE](LICENSE).
