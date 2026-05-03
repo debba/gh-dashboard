@@ -2,6 +2,7 @@ import type { GhIssue, GhRepo, RepoInsight } from "../../types/github";
 import { getLanguageColor } from "../../utils/colors";
 import { formatNumber, formatRelativeTime } from "../../utils/format";
 import { issueCountForRepo } from "../../utils/dashboard";
+import { Avatar } from "../common/Avatar";
 import { ForkIcon, IssueIcon, StarIcon } from "../common/Icons";
 
 interface RepoGridProps {
@@ -36,6 +37,7 @@ export function RepoGrid({ repos, issues, insightsByRepo, onRepoClick, onIssuesC
             }}
           >
             <div className="rc-head">
+              <Avatar login={repo.owner.login} size={28} />
               <div className="rc-title">
                 <a href={repo.url} target="_blank" rel="noreferrer" onClick={(event) => event.stopPropagation()}><span className="owner">{repo.owner.login}</span><span className="slash">/</span>{repo.name}</a>
               </div>

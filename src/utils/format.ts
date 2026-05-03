@@ -20,6 +20,10 @@ export function formatNumber(value: number): string {
   return String(value);
 }
 
+export function formatExactNumber(value: number): string {
+  return new Intl.NumberFormat("en-US").format(value);
+}
+
 export function formatBytes(value: number): string {
   if (!value) return "0 B";
   const units = ["B", "KB", "MB", "GB"];

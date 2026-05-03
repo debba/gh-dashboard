@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import {
   AuthRequiredClientError,
   fetchAuthStatus,
@@ -12,14 +13,15 @@ import {
 import { invalidate as invalidateCache, peek, swr } from "./api/cache";
 import { AuthGate } from "./components/AuthGate";
 import { RepositoryDetailsModal, type DetailTab } from "./components/modals/RepositoryDetailsModal";
-import { RepositoryMetricModal } from "./components/modals/RepositoryMetricModal";
+import { RepositoryMetricModal, type MetricKind } from "./components/modals/RepositoryMetricModal";
 import { TopBar } from "./components/TopBar";
 import { SidebarControls } from "./components/SidebarControls";
 import { Pagination } from "./components/common/Pagination";
-import { BoardIcon, BookIcon, ExportIcon, IssueIcon, PulseIcon } from "./components/common/Icons";
+import { BoardIcon, BookIcon, ExportIcon, InboxIcon, IssueIcon, PulseIcon } from "./components/common/Icons";
 import { IssueList } from "./components/views/IssueList";
 import { PullRequestList } from "./components/views/PullRequestList";
 import { DailyDigestView } from "./components/views/DailyDigestView";
+import { InboxView } from "./components/views/InboxView";
 import { InsightsView } from "./components/views/InsightsView";
 import { RepoGrid } from "./components/views/RepoGrid";
 import { KanbanView } from "./components/views/KanbanView";
@@ -52,10 +54,11 @@ import {
 import { clampPage } from "./utils/pagination";
 import { formatNumber } from "./utils/format";
 
-type Tab = "repos" | "issues" | "prs" | "kanban" | "insights" | "digests";
+type Tab = "inbox" | "repos" | "issues" | "prs" | "kanban" | "insights" | "digests";
 type Theme = "dark" | "light" | "auto";
 
 const TAB_ROUTES: Record<Tab, string> = {
+  inbox: "/inbox",
   repos: "/repositories",
   issues: "/issues",
   prs: "/pull-requests",
@@ -66,18 +69,20 @@ const TAB_ROUTES: Record<Tab, string> = {
 
 const ROUTE_TABS = new Map<string, Tab>(Object.entries(TAB_ROUTES).map(([tab, route]) => [route, tab as Tab]));
 const DETAIL_TABS = new Set<DetailTab>(["overview", "actions", "pull-requests", "issues", "releases", "forks", "traffic", "mentions", "dependents"]);
+const METRIC_KINDS = new Set<MetricKind>(["stars", "forks"]);
 
 function tabFromPath(pathname: string): Tab {
   return ROUTE_TABS.get(pathname) ?? "repos";
 }
 
-function detailTabFromSearch(search: string): DetailTab {
-  const tab = new URLSearchParams(search).get("detail");
+function detailTabFromParams(params: URLSearchParams): DetailTab {
+  const tab = params.get("detail");
   return tab && DETAIL_TABS.has(tab as DetailTab) ? tab as DetailTab : "overview";
 }
 
-function repoFromSearch(search: string): string {
-  return new URLSearchParams(search).get("repo") || "";
+function metricKindFromParams(params: URLSearchParams): MetricKind | null {
+  const metric = params.get("metric");
+  return metric && METRIC_KINDS.has(metric as MetricKind) ? metric as MetricKind : null;
 }
 
 const CACHE_KEY = {
@@ -138,9 +143,16 @@ function downloadJson(filename: string, rows: unknown[]) {
 type AuthState = "checking" | "anonymous" | "authenticated";
 
 export function App() {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tab = tabFromPath(location.pathname);
+  const routeRepoName = searchParams.get("repo") || "";
+  const repoDetailTab = detailTabFromParams(searchParams);
+  const routeMetricKind = metricKindFromParams(searchParams);
+
   const [authState, setAuthState] = useState<AuthState>("checking");
   const [authLogin, setAuthLogin] = useState<string | null>(null);
-  const [tab, setTab] = useState<Tab>(() => tabFromPath(window.location.pathname));
   const [issues, setIssues] = useState<GhIssue[]>([]);
   const [pullRequests, setPullRequests] = useState<GhPullRequest[]>([]);
   const [repos, setRepos] = useState<GhRepo[]>([]);
@@ -164,11 +176,6 @@ export function App() {
   const [issuePageSize, setIssuePageSize] = useState(Number(localStorage.getItem("gh-dash.issuesPageSize")) || 20);
   const [prPageSize, setPrPageSize] = useState(Number(localStorage.getItem("gh-dash.prsPageSize")) || 20);
   const [repoPageSize, setRepoPageSize] = useState(Number(localStorage.getItem("gh-dash.reposPageSize")) || 20);
-  const [metricModal, setMetricModal] = useState<{ kind: "stars" | "forks"; repo: string } | null>(null);
-  const [repoModal, setRepoModal] = useState<GhRepo | null>(null);
-  const [routeRepoName, setRouteRepoName] = useState(() => repoFromSearch(window.location.search));
-  const [repoDetailTab, setRepoDetailTab] = useState<DetailTab>(() => detailTabFromSearch(window.location.search));
-
   const abortRef = useRef<AbortController | null>(null);
 
   const loadData = useCallback((fresh = false) => {
@@ -316,6 +323,7 @@ export function App() {
   }, [theme]);
 
   useEffect(() => {
+    document.body.classList.toggle("tab-inbox", tab === "inbox");
     document.body.classList.toggle("tab-issues", tab === "issues");
     document.body.classList.toggle("tab-prs", tab === "prs");
     document.body.classList.toggle("tab-repos", tab === "repos");
@@ -326,22 +334,13 @@ export function App() {
   }, [tab, filtersOpen]);
 
   useEffect(() => {
-    const path = TAB_ROUTES[tab];
-    if (window.location.pathname !== path) {
-      window.history.replaceState({ tab }, "", `${path}${window.location.search}`);
+    if (location.pathname === "/" || location.pathname === "/index.html") {
+      navigate(`${TAB_ROUTES.repos}${location.search}`, { replace: true });
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  useEffect(() => {
-    function handlePopState() {
-      setTab(tabFromPath(window.location.pathname));
-      setRouteRepoName(repoFromSearch(window.location.search));
-      setRepoDetailTab(detailTabFromSearch(window.location.search));
-      setFiltersOpen(false);
-    }
-    window.addEventListener("popstate", handlePopState);
-    return () => window.removeEventListener("popstate", handlePopState);
-  }, []);
+  useEffect(() => setFiltersOpen(false), [location.pathname]);
 
   useEffect(() => localStorage.setItem("gh-dash.issuesPageSize", String(issuePageSize)), [issuePageSize]);
   useEffect(() => localStorage.setItem("gh-dash.prsPageSize", String(prPageSize)), [prPageSize]);
@@ -375,15 +374,12 @@ export function App() {
   const averageHealth = repoInsights.length ? Math.round(repoInsights.reduce((sum, insight) => sum + insight.healthScore, 0) / repoInsights.length) : 0;
   const totalAlerts = repoInsights.reduce((sum, insight) => sum + insight.alerts.length, 0);
   const reposByName = useMemo(() => new Map(repos.map((repo) => [repo.nameWithOwner, repo])), [repos]);
-
-  useEffect(() => {
-    if (!routeRepoName) {
-      setRepoModal(null);
-      return;
-    }
-    const nextRepo = reposByName.get(routeRepoName);
-    if (nextRepo) setRepoModal(nextRepo);
-  }, [reposByName, routeRepoName]);
+  const repoModal = useMemo(
+    () => (routeRepoName && !routeMetricKind ? reposByName.get(routeRepoName) ?? null : null),
+    [reposByName, routeMetricKind, routeRepoName],
+  );
+  const metricRepo = routeMetricKind && routeRepoName ? reposByName.get(routeRepoName) ?? null : null;
+  const metricTotalCount = routeMetricKind === "stars" ? metricRepo?.stargazerCount : routeMetricKind === "forks" ? metricRepo?.forkCount : undefined;
 
   if (authState === "checking") {
     return <div className="auth-gate"><div className="auth-card"><p className="auth-status">Loading…</p></div></div>;
@@ -429,38 +425,32 @@ export function App() {
   }
 
   function navigateTab(nextTab: Tab) {
-    setTab(nextTab);
-    setFiltersOpen(false);
-    const path = TAB_ROUTES[nextTab];
-    if (window.location.pathname !== path || window.location.search) {
-      window.history.pushState({ tab: nextTab }, "", path);
-    }
-    setRouteRepoName("");
-    setRepoModal(null);
+    navigate(TAB_ROUTES[nextTab]);
   }
 
   function openRepoModal(repo: GhRepo, detail: DetailTab = "overview") {
-    setRepoModal(repo);
-    setRouteRepoName(repo.nameWithOwner);
-    setRepoDetailTab(detail);
-    const params = new URLSearchParams({ repo: repo.nameWithOwner, detail });
-    window.history.pushState({ tab, repo: repo.nameWithOwner, detail }, "", `${TAB_ROUTES[tab]}?${params.toString()}`);
+    setSearchParams({ repo: repo.nameWithOwner, detail });
   }
 
   function closeRepoModal() {
-    setRepoModal(null);
-    setRouteRepoName("");
-    window.history.pushState({ tab }, "", TAB_ROUTES[tab]);
+    navigate(TAB_ROUTES[tab]);
+  }
+
+  function openMetricModal(repo: string, metric: MetricKind) {
+    setSearchParams({ repo, metric });
+  }
+
+  function closeMetricModal() {
+    navigate(TAB_ROUTES[tab]);
   }
 
   function changeRepoDetailTab(detail: DetailTab) {
-    setRepoDetailTab(detail);
     if (!repoModal) return;
-    const params = new URLSearchParams({ repo: repoModal.nameWithOwner, detail });
-    window.history.pushState({ tab, repo: repoModal.nameWithOwner, detail }, "", `${TAB_ROUTES[tab]}?${params.toString()}`);
+    setSearchParams({ repo: repoModal.nameWithOwner, detail });
   }
 
   const tabs = [
+    { key: "inbox" as const, label: "Inbox", count: issues.length + pullRequests.length, icon: <InboxIcon /> },
     { key: "repos" as const, label: "Repositories", count: repos.length, icon: <BookIcon /> },
     { key: "issues" as const, label: "Issues", count: issues.length, icon: <IssueIcon /> },
     { key: "prs" as const, label: "Pull Requests", count: pullRequests.length, icon: <PulseIcon /> },
@@ -484,7 +474,7 @@ export function App() {
         onLogout={() => void handleLogout()}
       />
       <div className="sidebar-backdrop" onClick={() => setFiltersOpen(false)} />
-      <div className="layout">
+      <div className={`layout ${tab === "inbox" ? "layout-inbox" : ""}`}>
         <SidebarControls
           tab={tab}
           search={search}
@@ -514,6 +504,16 @@ export function App() {
             </div>
           </div>
 
+          {tab === "inbox" ? (
+            <InboxView
+              issues={issues}
+              pullRequests={pullRequests}
+              userLogin={userLogin}
+              reposByName={reposByName}
+              onRepoClick={openRepoModal}
+            />
+          ) : null}
+
           {tab === "issues" ? (
             <div className="view-issues" style={{ display: "block" }}>
               <section className="stats">
@@ -524,8 +524,8 @@ export function App() {
               </section>
               <div className="toolbar">
                 <span className="count-chip"><strong>{visibleIssues.length}</strong> of <span>{filteredIssues.length}</span> shown</span>
-                <div className="spacer" style={{ flex: 1 }} />
-                <label style={{ fontSize: 12, color: "var(--muted)" }}>Sort</label>
+                <div className="spacer" />
+                <label>Sort</label>
                 <select className="sort" value={issueSort} onChange={(event) => setIssueSort(event.target.value)}>
                   <option value="updated_desc">Recently updated</option>
                   <option value="updated_asc">Least recently updated</option>
@@ -535,7 +535,7 @@ export function App() {
                   <option value="comments_asc">Least commented</option>
                   <option value="repo_asc">Repository (A→Z)</option>
                 </select>
-                <button className="btn" onClick={() => downloadJson("issues.json", filteredIssues)}><ExportIcon /> Export</button>
+                <button className="btn ghost" onClick={() => downloadJson("issues.json", filteredIssues)}><ExportIcon /> Export</button>
               </div>
               <IssueList issues={visibleIssues} />
               <Pagination totalItems={filteredIssues.length} page={issuePageSafe} pageSize={issuePageSize} onPageChange={setIssuePage} onPageSizeChange={(size) => { setIssuePageSize(size); setIssuePage(1); }} />
@@ -553,8 +553,8 @@ export function App() {
               </section>
               <div className="toolbar">
                 <span className="count-chip"><strong>{visiblePullRequests.length}</strong> of <span>{filteredPullRequests.length}</span> shown</span>
-                <div className="spacer" style={{ flex: 1 }} />
-                <label style={{ fontSize: 12, color: "var(--muted)" }}>Preset</label>
+                <div className="spacer" />
+                <label>Preset</label>
                 <select className="sort" value={prFilters.preset} onChange={(event) => { setPrFilters({ ...prFilters, preset: event.target.value }); setPrPage(1); }}>
                   <option value="">All</option>
                   <option value="ready">Ready</option>
@@ -566,7 +566,7 @@ export function App() {
                   <option value="authored-me">Authored by me</option>
                   <option value="stale">Stale</option>
                 </select>
-                <label style={{ fontSize: 12, color: "var(--muted)" }}>Sort</label>
+                <label>Sort</label>
                 <select className="sort" value={prSort} onChange={(event) => setPrSort(event.target.value)}>
                   <option value="updated_desc">Recently updated</option>
                   <option value="updated_asc">Least recently updated</option>
@@ -579,7 +579,7 @@ export function App() {
                   <option value="comments_desc">Most commented</option>
                   <option value="repo_asc">Repository (A→Z)</option>
                 </select>
-                <button className="btn" onClick={() => downloadJson("pull-requests.json", filteredPullRequests)}><ExportIcon /> Export</button>
+                <button className="btn ghost" onClick={() => downloadJson("pull-requests.json", filteredPullRequests)}><ExportIcon /> Export</button>
               </div>
               <PullRequestList pullRequests={visiblePullRequests} />
               <Pagination totalItems={filteredPullRequests.length} page={prPageSafe} pageSize={prPageSize} onPageChange={setPrPage} onPageSizeChange={(size) => { setPrPageSize(size); setPrPage(1); }} />
@@ -596,8 +596,8 @@ export function App() {
               </section>
               <div className="toolbar">
                 <span className="count-chip"><strong>{visibleRepos.length}</strong> of <span>{filteredRepos.length}</span> shown</span>
-                <div className="spacer" style={{ flex: 1 }} />
-                <label style={{ fontSize: 12, color: "var(--muted)" }}>Sort</label>
+                <div className="spacer" />
+                <label>Sort</label>
                 <select className="sort" value={repoSort} onChange={(event) => setRepoSort(event.target.value)}>
                   <option value="stars_desc">Most stars</option>
                   <option value="stars_asc">Fewest stars</option>
@@ -611,7 +611,7 @@ export function App() {
                   <option value="updated_desc">Recently updated</option>
                   <option value="name_asc">Name (A→Z)</option>
                 </select>
-                <button className="btn" onClick={() => downloadJson("repositories.json", filteredRepos)}><ExportIcon /> Export</button>
+                <button className="btn ghost" onClick={() => downloadJson("repositories.json", filteredRepos)}><ExportIcon /> Export</button>
               </div>
               <RepoGrid
                 repos={visibleRepos}
@@ -619,8 +619,8 @@ export function App() {
                 insightsByRepo={insightsByRepo}
                 onRepoClick={openRepoModal}
                 onIssuesClick={(repo) => { setIssueFilters({ ...issueFilters, repos: new Set([repo]) }); navigateTab("issues"); }}
-                onStarsClick={(repo) => setMetricModal({ kind: "stars", repo })}
-                onForksClick={(repo) => setMetricModal({ kind: "forks", repo })}
+                onStarsClick={(repo) => openMetricModal(repo, "stars")}
+                onForksClick={(repo) => openMetricModal(repo, "forks")}
               />
               <Pagination totalItems={filteredRepos.length} page={repoPageSafe} pageSize={repoPageSize} onPageChange={setRepoPage} onPageSizeChange={(size) => { setRepoPageSize(size); setRepoPage(1); }} />
             </div>
@@ -668,7 +668,14 @@ export function App() {
           }}
         />
       ) : null}
-      {metricModal ? <RepositoryMetricModal kind={metricModal.kind} repo={metricModal.repo} onClose={() => setMetricModal(null)} /> : null}
+      {routeMetricKind && routeRepoName ? (
+        <RepositoryMetricModal
+          kind={routeMetricKind}
+          repo={routeRepoName}
+          totalCount={metricTotalCount}
+          onClose={closeMetricModal}
+        />
+      ) : null}
     </>
   );
 }

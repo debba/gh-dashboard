@@ -7,6 +7,7 @@ import type {
   IssuesData,
   MentionCodeItem,
   MentionIssueItem,
+  NotificationsData,
   PageInfo,
   ProjectDetails,
   ProjectSummary,
@@ -175,6 +176,26 @@ export function fetchRepoInsights(fresh = false, signal?: AbortSignal): Promise<
 
 export function fetchDailyDigests(signal?: AbortSignal): Promise<DailyDigestsData> {
   return readJson("/api/daily-digests", withSignal(signal), "/api/daily-digests");
+}
+
+export function fetchNotifications(fresh = false, signal?: AbortSignal): Promise<NotificationsData> {
+  return readJson<NotificationsData>(`/api/notifications${fresh ? "?fresh=1" : ""}`, withSignal(signal), "/api/notifications");
+}
+
+export function markNotificationRead(threadId: string): Promise<{ ok: true }> {
+  return readJson("/api/notifications/read", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ threadId }),
+  });
+}
+
+export function markAllNotificationsRead(payload: { repo?: string; lastReadAt?: string } = {}): Promise<{ ok: true }> {
+  return readJson("/api/notifications/read-all", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
 }
 
 export function fetchProjects(): Promise<{ ok: true; projects: ProjectSummary[] }> {

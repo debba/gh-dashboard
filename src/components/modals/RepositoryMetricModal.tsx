@@ -1,23 +1,24 @@
 import { useEffect, useState } from "react";
 import { fetchForks, fetchStargazers } from "../../api/github";
 import type { ForkNode, StargazerNode } from "../../types/github";
-import { formatNumber, formatRelativeTime } from "../../utils/format";
+import { formatExactNumber, formatNumber, formatRelativeTime } from "../../utils/format";
 import { CloseIcon, ForkIcon, StarIcon } from "../common/Icons";
 
-type MetricKind = "stars" | "forks";
+export type MetricKind = "stars" | "forks";
 
 interface RepositoryMetricModalProps {
   kind: MetricKind;
   repo: string;
+  totalCount?: number;
   onClose: () => void;
 }
 
-export function RepositoryMetricModal({ kind, repo, onClose }: RepositoryMetricModalProps) {
+export function RepositoryMetricModal({ kind, repo, totalCount, onClose }: RepositoryMetricModalProps) {
   const [direction, setDirection] = useState<"ASC" | "DESC">("DESC");
   const [forkField, setForkField] = useState("PUSHED_AT");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [total, setTotal] = useState(0);
+  const [total, setTotal] = useState<number | null>(null);
   const [stargazers, setStargazers] = useState<StargazerNode[]>([]);
   const [forks, setForks] = useState<ForkNode[]>([]);
 
@@ -26,6 +27,7 @@ export function RepositoryMetricModal({ kind, repo, onClose }: RepositoryMetricM
     async function load() {
       setLoading(true);
       setError("");
+      setTotal(null);
       try {
         if (kind === "stars") {
           const result = await fetchStargazers({ repo, direction });
@@ -52,6 +54,8 @@ export function RepositoryMetricModal({ kind, repo, onClose }: RepositoryMetricM
     };
   }, [kind, repo, direction, forkField]);
 
+  const displayedTotal = total ?? totalCount;
+
   return (
     <div className="modal-root">
       <div className="modal-backdrop" onClick={onClose} />
@@ -67,7 +71,7 @@ export function RepositoryMetricModal({ kind, repo, onClose }: RepositoryMetricM
           <button className="modal-close" aria-label="Close" onClick={onClose}><CloseIcon /></button>
         </header>
         <div className="modal-toolbar">
-          <span className="modal-count"><strong>{formatNumber(total)}</strong> total</span>
+          <span className="modal-count"><strong>{displayedTotal === undefined ? "..." : formatExactNumber(displayedTotal)}</strong> total</span>
           <div className="spacer" style={{ flex: 1 }} />
           {kind === "forks" ? (
             <select value={forkField} onChange={(event) => setForkField(event.target.value)}>
