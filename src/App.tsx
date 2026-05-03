@@ -51,6 +51,7 @@ import {
 } from "./utils/dashboard";
 import { clampPage } from "./utils/pagination";
 import { formatNumber } from "./utils/format";
+import { clearStatsCache, readStatsCache, writeStatsCache } from "./utils/statsCache";
 
 type Tab = "repos" | "issues" | "prs" | "kanban" | "insights" | "digests";
 type Theme = "dark" | "light" | "auto";
@@ -188,6 +189,18 @@ export function App() {
     const cachedPrs = peek<PullRequestsData>(CACHE_KEY.prs);
     if (cachedPrs) setPullRequests(cachedPrs.pullRequests);
 
+    // Fall back to localStorage when in-memory cache is empty (page refresh)
+    if (!cachedRepos && !cachedIssues && !cachedPrs) {
+      const persisted = readStatsCache();
+      if (persisted) {
+        setRepos(persisted.repos as GhRepo[]);
+        setOwners(persisted.owners);
+        setIssues(persisted.issues as GhIssue[]);
+        setPullRequests(persisted.pullRequests as GhPullRequest[]);
+        if (persisted.fetchedAt) setFetchedAt(persisted.fetchedAt);
+      }
+    }
+
     let pending = 3;
     setLoading(true);
     const finish = () => {
@@ -257,6 +270,18 @@ export function App() {
 
   useEffect(() => () => abortRef.current?.abort(), []);
 
+  // Persist dashboard data to localStorage for instant display on next page load
+  useEffect(() => {
+    if (repos.length === 0 && issues.length === 0 && pullRequests.length === 0) return;
+    writeStatsCache({
+      repos,
+      owners,
+      issues,
+      pullRequests,
+      fetchedAt,
+    });
+  }, [repos, owners, issues, pullRequests, fetchedAt]);
+
   useEffect(() => {
     if (authState !== "authenticated") return;
     if (tab !== "insights" && tab !== "repos") return;
@@ -299,6 +324,7 @@ export function App() {
       // ignore — UI flips regardless
     }
     invalidateCache();
+    clearStatsCache();
     setAuthState("anonymous");
     setAuthLogin(null);
     setIssues([]);
