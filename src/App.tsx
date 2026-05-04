@@ -185,6 +185,7 @@ export function App() {
     const controller = new AbortController();
     abortRef.current = controller;
     setError("");
+    setDataStale(true);
 
     const cachedRepos = peek<ReposData>(CACHE_KEY.repos);
     if (cachedRepos) {
