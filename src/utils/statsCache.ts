@@ -5,6 +5,8 @@
 
 const STORAGE_PREFIX = "gh-dash.cache.";
 
+// Arrays typed as unknown[] to avoid coupling this module to the full GitHub types.
+// The consumer casts them back (e.g. `as GhRepo[]`) — the cache is just a pass-through.
 export interface CachedStats {
   repos: unknown[];
   owners: string[];

@@ -37,6 +37,12 @@ export interface CachedFilters {
     dates: { cf: string; ct: string; uf: string; ut: string };
     preset: string;
   };
+  // Optional so cached data from before this field existed still validates.
+  sorts?: {
+    issueSort: string;
+    prSort: string;
+    repoSort: string;
+  };
   savedAt: number;
 }
 
@@ -114,7 +120,11 @@ export function readFiltersCache(): CachedFilters | null {
 
 /**
  * Convert cached JSON-safe filters back to the Set-based types used by the app.
- * Sanitizes invalid visibility values.
+ * Sanitizes invalid visibility values to "all".
+ *
+ * Stale org/language references (orgs that no longer exist in the user's data)
+ * are kept in the Sets — the existing filter logic in App.tsx intersects them
+ * with the current facets, so non-matching entries simply produce 0 results.
  */
 export function hydrateFilters(cached: CachedFilters): {
   repoFilters: RepoFilters;
@@ -165,6 +175,7 @@ export function writeFiltersCache(
   repoFilters: RepoFilters,
   issueFilters: IssueFilters,
   prFilters: PullRequestFilters,
+  sorts?: { issueSort: string; prSort: string; repoSort: string },
 ): void {
   try {
     const entry: CachedFilters = {
@@ -196,6 +207,7 @@ export function writeFiltersCache(
         dates: { ...prFilters.dates },
         preset: prFilters.preset,
       },
+      sorts: sorts ? { ...sorts } : undefined,
       savedAt: Date.now(),
     };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(entry));

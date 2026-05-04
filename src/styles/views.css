@@ -2,6 +2,8 @@
   .main {
     min-width: 0;
     display: grid;
+    /* Explicit column prevents implicit track sizing to content width,
+       which caused horizontal overflow at intermediate viewport widths. */
     grid-template-columns: minmax(0, 1fr);
     align-content: start;
   }
