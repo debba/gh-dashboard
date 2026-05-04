@@ -52,6 +52,7 @@ import {
 import { clampPage } from "./utils/pagination";
 import { formatNumber } from "./utils/format";
 import { clearStatsCache, readStatsCache, writeStatsCache } from "./utils/statsCache";
+import { clearFiltersCache, hydrateFilters, readFiltersCache, writeFiltersCache } from "./utils/filtersCache";
 
 type Tab = "repos" | "issues" | "prs" | "kanban" | "insights" | "digests";
 type Theme = "dark" | "light" | "auto";
@@ -139,6 +140,12 @@ function downloadJson(filename: string, rows: unknown[]) {
 type AuthState = "checking" | "anonymous" | "authenticated";
 
 export function App() {
+  // Read cached filters once — shared across all filter/sort useState initializers below.
+  const [cachedFiltersOnMount] = useState(() => {
+    const raw = readFiltersCache();
+    return raw ? { hydrated: hydrateFilters(raw), sorts: raw.sorts } : null;
+  });
+
   const [authState, setAuthState] = useState<AuthState>("checking");
   const [authLogin, setAuthLogin] = useState<string | null>(null);
   const [tab, setTab] = useState<Tab>(() => tabFromPath(window.location.pathname));
@@ -154,12 +161,14 @@ export function App() {
   const [error, setError] = useState("");
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [theme, setTheme] = useState<Theme>(() => (localStorage.getItem("gh-dash.theme") as Theme) || "dark");
-  const [issueFilters, setIssueFilters] = useState<IssueFilters>(() => defaultIssueFilters());
-  const [prFilters, setPrFilters] = useState<PullRequestFilters>(() => defaultPrFilters());
-  const [repoFilters, setRepoFilters] = useState<RepoFilters>(() => defaultRepoFilters());
-  const [issueSort, setIssueSort] = useState("updated_desc");
-  const [prSort, setPrSort] = useState("updated_desc");
-  const [repoSort, setRepoSort] = useState("stars_desc");
+  const [issueFilters, setIssueFilters] = useState<IssueFilters>(() => cachedFiltersOnMount?.hydrated.issueFilters ?? defaultIssueFilters());
+  const [prFilters, setPrFilters] = useState<PullRequestFilters>(() => cachedFiltersOnMount?.hydrated.prFilters ?? defaultPrFilters());
+  const [repoFilters, setRepoFilters] = useState<RepoFilters>(() => cachedFiltersOnMount?.hydrated.repoFilters ?? defaultRepoFilters());
+  const [issueSort, setIssueSort] = useState(() => cachedFiltersOnMount?.sorts?.issueSort || "updated_desc");
+  const [prSort, setPrSort] = useState(() => cachedFiltersOnMount?.sorts?.prSort || "updated_desc");
+  const [repoSort, setRepoSort] = useState(() => cachedFiltersOnMount?.sorts?.repoSort || "stars_desc");
+  // Page numbers are intentionally NOT cached — they're ephemeral positions,
+  // not preferences. After a refresh, page 1 is always the correct start.
   const [issuePage, setIssuePage] = useState(1);
   const [prPage, setPrPage] = useState(1);
   const [repoPage, setRepoPage] = useState(1);
@@ -200,7 +209,6 @@ export function App() {
         setIssues(persisted.issues as GhIssue[]);
         setPullRequests(persisted.pullRequests as GhPullRequest[]);
         if (persisted.fetchedAt) setFetchedAt(persisted.fetchedAt);
-        setDataStale(true);
       }
     }
 
@@ -331,6 +339,7 @@ export function App() {
     }
     invalidateCache();
     clearStatsCache();
+    clearFiltersCache();
     setAuthState("anonymous");
     setAuthLogin(null);
     setIssues([]);
@@ -378,6 +387,11 @@ export function App() {
   useEffect(() => localStorage.setItem("gh-dash.issuesPageSize", String(issuePageSize)), [issuePageSize]);
   useEffect(() => localStorage.setItem("gh-dash.prsPageSize", String(prPageSize)), [prPageSize]);
   useEffect(() => localStorage.setItem("gh-dash.reposPageSize", String(repoPageSize)), [repoPageSize]);
+
+  // Persist sidebar filters and sort order to localStorage
+  useEffect(() => {
+    writeFiltersCache(repoFilters, issueFilters, prFilters, { issueSort, prSort, repoSort });
+  }, [repoFilters, issueFilters, prFilters, issueSort, prSort, repoSort]);
 
   const userLogin = owners[0] || "";
   const issueFacets = useMemo(() => buildIssueFacets(issues), [issues]);
@@ -458,6 +472,7 @@ export function App() {
     if (tab === "repos" || tab === "insights" || tab === "digests") setRepoFilters(defaultRepoFilters());
     else if (tab === "prs") setPrFilters(defaultPrFilters());
     else setIssueFilters(defaultIssueFilters());
+    clearFiltersCache();
   }
 
   function navigateTab(nextTab: Tab) {
