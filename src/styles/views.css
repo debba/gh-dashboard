@@ -95,6 +95,49 @@
   .chip .k { color: var(--muted); font-size: 11px; }
   .chip .val { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 180px; }
 
+  /* Issue list */
+  .list { background: var(--panel); border: 1px solid var(--border-soft); border-radius: 9px; overflow: hidden; box-shadow: 0 1px 0 rgba(255,255,255,0.035); }
+  .issue {
+    display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 14px;
+    padding: 14px 16px; border-bottom: 1px solid var(--border-soft);
+    transition: background .1s ease;
+  }
+  @media (min-width: 720px) { .issue { padding: 14px 18px; } }
+  @media (max-width: 600px) {
+    .issue { grid-template-columns: 1fr; gap: 10px; }
+    .issue .aside-col { flex-direction: row !important; gap: 10px !important; align-items: center !important; flex-wrap: wrap; }
+  }
+  .issue:last-child { border-bottom: none; }
+  .issue:hover { background: var(--hover-surface); }
+  .issue .main-col { min-width: 0; }
+  .issue .aside-col { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; white-space: nowrap; color: var(--muted); font-size: 12px; }
+
+  .issue .row1 { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--muted); margin-bottom: 4px; flex-wrap: wrap; }
+  .repo-pill {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: var(--panel-2); border: 1px solid var(--border); border-radius: 6px;
+    padding: 2px 8px; color: var(--text); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11.5px;
+    max-width: 100%; overflow: hidden; text-overflow: ellipsis;
+  }
+  .repo-pill .sep { color: var(--muted-2); }
+  .issue .num { color: var(--muted); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; }
+  .title-link { font-size: 14.5px; font-weight: 600; color: var(--text); line-height: 1.35; display: inline-block; word-break: break-word; }
+  .title-link:hover { color: var(--accent-2); text-decoration: none; }
+
+  .labels { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 8px; }
+  .label {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-size: 11px; padding: 2px 8px; border-radius: 999px;
+    border: 1px solid rgba(255,255,255,0.08);
+  }
+  .btn.theme-btn > .label,
+  .btn.primary > .label { border-color: transparent; }
+  .label .dot { width: 7px; height: 7px; border-radius: 50%; }
+
+  .meta-row { display: flex; align-items: center; gap: 10px; margin-top: 8px; color: var(--muted); font-size: 12px; flex-wrap: wrap; }
+  .meta-row .sep { color: var(--muted-2); }
+  .author-chip { display: inline-flex; align-items: center; gap: 6px; color: var(--text); }
+
   /* Shared avatar (used in lists, inbox, modals) */
   .avatar {
     display: inline-flex;
