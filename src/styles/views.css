@@ -408,3 +408,19 @@
   }
   .rc-stat.clickable:hover { background: var(--hover-surface-strong); color: var(--text); }
   .rc-stat.clickable:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+  /* Stale data indicator — cached values pulse softly until fresh API data arrives */
+  @keyframes stale-pulse {
+    0%, 100% { opacity: 0.4; }
+    50% { opacity: 0.7; }
+  }
+  .main.data-stale .stat .v,
+  .main.data-stale .tab-badge {
+    color: var(--muted);
+    animation: stale-pulse 1.8s ease-in-out infinite;
+  }
+  .main:not(.data-stale) .stat .v,
+  .main:not(.data-stale) .tab-badge {
+    animation: none;
+    transition: color 0.5s ease, opacity 0.5s ease;
+  }
