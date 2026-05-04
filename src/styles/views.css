@@ -12,6 +12,8 @@
     gap: 12px;
     margin-bottom: 14px;
     flex-wrap: wrap;
+    min-width: 0;
+    max-width: 100%;
   }
 
   .stats {
@@ -277,7 +279,7 @@
     .pagination .page-btn { min-width: 30px; padding: 0 8px; }
   }
 
-  .view-issues, .view-repos, .view-kanban, .view-digests { display: none; }
+  .view-issues, .view-repos, .view-kanban, .view-digests { display: none; min-width: 0; }
   body.tab-issues .view-issues { display: block; }
   body.tab-repos  .view-repos  { display: block; }
   body.tab-kanban .view-kanban { display: block; }
