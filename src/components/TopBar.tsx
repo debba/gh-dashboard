@@ -34,13 +34,15 @@ export function TopBar({
   return (
     <div className="topbar">
       <div className="brand">
-        <div style={{ position: "relative", width: 48, height: 48, flexShrink: 0 }}>
-          <div className="logo" style={{ position: "absolute", top: 0, left: 0 }}>
+        {/* Wrapper for logo + org badges. Logo keeps its original overflow:hidden for border-radius. */}
+        <div style={{ position: "relative", flexShrink: 0 }}>
+          <div className="logo">
             <img src={authLogin ? `https://github.com/${authLogin}.png?size=80` : appLogo} alt="" />
           </div>
+          {/* Org badges: positioned relative to wrapper, outside logo's overflow:hidden */}
           {orgs.length > 0 && orgs.slice(0, 3).map((org, i) => (
             <img key={org} src={`https://github.com/${org}.png?size=40`} alt={org} title={org}
-              style={{ position: "absolute", bottom: -2, right: -2, width: 20, height: 20, borderRadius: "50%", objectFit: "contain", objectPosition: "55% center", zIndex: 3 - i, border: "1px solid var(--border-soft)", background: "color-mix(in srgb, var(--panel) 85%, transparent)" }} />
+              style={{ position: "absolute", bottom: -4, right: -4 + i * 8, width: 20, height: 20, borderRadius: "50%", objectFit: "contain", objectPosition: "55% center", zIndex: 3 - i, border: "1px solid var(--border-soft)", background: "color-mix(in srgb, var(--panel) 85%, transparent)" }} />
           ))}
         </div>
         <div className="texts">

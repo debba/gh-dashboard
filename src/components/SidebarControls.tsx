@@ -62,13 +62,14 @@ function CheckList({
   showGhAvatar?: boolean;
   userLogin?: string;
 }) {
-  // When showing org avatars, put user's personal account last (orgs first)
+  // Original sort (checked first, then by count, then alphabetical) with one addition:
+  // when userLogin is set, the user's personal account always sorts last (orgs first).
   const sorted = [...entries].sort((a, b) => {
     if (userLogin) {
       if (a[0] === userLogin && b[0] !== userLogin) return 1;
       if (b[0] === userLogin && a[0] !== userLogin) return -1;
     }
-    return countOf(b[1]) - countOf(a[1]) || a[0].localeCompare(b[0]);
+    return Number(selected.has(b[0])) - Number(selected.has(a[0])) || countOf(b[1]) - countOf(a[1]) || a[0].localeCompare(b[0]);
   });
   if (!sorted.length) return <div style={{ padding: 8, color: "var(--muted-2)", fontSize: 12 }}>No matches</div>;
 
