@@ -75,4 +75,38 @@ describe("statsCache", () => {
 
     Storage.prototype.setItem = originalSetItem;
   });
+
+  it("overwrites previous cache on second write", () => {
+    writeStatsCache({
+      repos: [{ name: "old" }],
+      owners: ["old-owner"],
+      issues: [],
+      pullRequests: [],
+      fetchedAt: "2026-01-01T00:00:00Z",
+    });
+
+    writeStatsCache({
+      repos: [{ name: "new" }],
+      owners: ["new-owner"],
+      issues: [{ title: "Fresh" }],
+      pullRequests: [],
+      fetchedAt: "2026-05-03T00:00:00Z",
+    });
+
+    const result = readStatsCache();
+    expect(result!.repos).toEqual([{ name: "new" }]);
+    expect(result!.owners).toEqual(["new-owner"]);
+    expect(result!.issues).toEqual([{ title: "Fresh" }]);
+    expect(result!.fetchedAt).toBe("2026-05-03T00:00:00Z");
+  });
+
+  it("returns null if required arrays are missing", () => {
+    localStorage.setItem("gh-dash.cache.stats", JSON.stringify({
+      repos: [{ name: "ok" }],
+      owners: ["owner"],
+      fetchedAt: "2026-01-01",
+      savedAt: 1,
+    }));
+    expect(readStatsCache()).toBeNull();
+  });
 });
