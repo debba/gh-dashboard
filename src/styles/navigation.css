@@ -129,7 +129,7 @@
 
   /* Tabs */
   .tabs {
-    display: inline-flex; background: color-mix(in srgb, var(--panel) 90%, transparent); border: 1px solid var(--border-soft); border-radius: 8px; padding: 3px; gap: 2px;
+    display: flex; background: color-mix(in srgb, var(--panel) 90%, transparent); border: 1px solid var(--border-soft); border-radius: 8px; padding: 3px; gap: 2px;
     box-shadow: inset 0 1px 0 rgba(255,255,255,0.035);
     max-width: 100%;
     overflow-x: auto;
