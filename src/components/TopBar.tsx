@@ -29,7 +29,7 @@ export function TopBar({
   return (
     <div className="topbar">
       <div className="brand">
-        <div className="logo"><img src={appLogo} alt="" /></div>
+        <div className="logo"><img src={authLogin ? `https://github.com/${authLogin}.png?size=80` : appLogo} alt="" /></div>
         <div className="texts">
           <h1>GitHub Dashboard</h1>
           <div className="sub">{subtitle}</div>
