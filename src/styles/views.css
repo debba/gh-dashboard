@@ -2,6 +2,7 @@
   .main {
     min-width: 0;
     display: grid;
+    grid-template-columns: minmax(0, 1fr);
     align-content: start;
   }
 
@@ -14,7 +15,7 @@
   }
 
   .stats {
-    display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(min(190px, 100%), 1fr));
     gap: 10px; margin-bottom: 14px;
   }
   @media (max-width: 720px) { .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; } }
@@ -375,6 +376,7 @@
     padding: 14px 16px; display: flex; flex-direction: column; gap: 10px;
     transition: border-color .12s ease; min-width: 0; cursor: pointer;
     box-shadow: 0 1px 0 rgba(255,255,255,0.035);
+    overflow: hidden;
   }
   .repo-card:hover { border-color: var(--button-hover-border); }
   .repo-card:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
