@@ -57,7 +57,7 @@ function CheckList({
   showSwatch?: boolean;
   languageDot?: boolean;
 }) {
-  const sorted = [...entries].sort((a, b) => Number(selected.has(b[0])) - Number(selected.has(a[0])) || countOf(b[1]) - countOf(a[1]) || a[0].localeCompare(b[0]));
+  const sorted = [...entries].sort((a, b) => countOf(b[1]) - countOf(a[1]) || a[0].localeCompare(b[0]));
   if (!sorted.length) return <div style={{ padding: 8, color: "var(--muted-2)", fontSize: 12 }}>No matches</div>;
 
   return (
