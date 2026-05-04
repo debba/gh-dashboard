@@ -8,6 +8,7 @@ interface TopBarProps {
   themeLabel: string;
   themeIcon: ReactNode;
   authLogin: string | null;
+  owners: string[];
   onThemeToggle: () => void;
   onRefresh: () => void;
   onOpenFilters: () => void;
@@ -21,15 +22,27 @@ export function TopBar({
   themeLabel,
   themeIcon,
   authLogin,
+  owners,
   onThemeToggle,
   onRefresh,
   onOpenFilters,
   onLogout,
 }: TopBarProps) {
+  // Orgs are all owners except the user's own login
+  const orgs = owners.filter((o) => o !== authLogin);
+
   return (
     <div className="topbar">
       <div className="brand">
-        <div className="logo"><img src={authLogin ? `https://github.com/${authLogin}.png?size=80` : appLogo} alt="" /></div>
+        <div style={{ position: "relative", width: 48, height: 48, flexShrink: 0 }}>
+          <div className="logo" style={{ position: "absolute", top: 0, left: 0 }}>
+            <img src={authLogin ? `https://github.com/${authLogin}.png?size=80` : appLogo} alt="" />
+          </div>
+          {orgs.length > 0 && orgs.slice(0, 3).map((org, i) => (
+            <img key={org} src={`https://github.com/${org}.png?size=40`} alt={org} title={org}
+              style={{ position: "absolute", bottom: -2, right: -2, width: 20, height: 20, borderRadius: "50%", objectFit: "contain", objectPosition: "55% center", zIndex: 3 - i, border: "1px solid var(--border-soft)", background: "color-mix(in srgb, var(--panel) 85%, transparent)" }} />
+          ))}
+        </div>
         <div className="texts">
           <h1>GitHub Dashboard</h1>
           <div className="sub">{subtitle}</div>

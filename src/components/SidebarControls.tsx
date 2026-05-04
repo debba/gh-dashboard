@@ -31,6 +31,7 @@ interface SidebarControlsProps {
   onRepoFiltersChange: (filters: RepoFilters) => void;
   onReset: () => void;
   onClose: () => void;
+  authLogin?: string;
 }
 
 function toggleSetValue(values: Set<string>, value: string): Set<string> {
@@ -50,14 +51,25 @@ function CheckList({
   onToggle,
   showSwatch,
   languageDot,
+  showGhAvatar,
+  userLogin,
 }: {
   entries: Array<[string, FacetValue]>;
   selected: Set<string>;
   onToggle: (value: string) => void;
   showSwatch?: boolean;
   languageDot?: boolean;
+  showGhAvatar?: boolean;
+  userLogin?: string;
 }) {
-  const sorted = [...entries].sort((a, b) => countOf(b[1]) - countOf(a[1]) || a[0].localeCompare(b[0]));
+  // When showing org avatars, put user's personal account last (orgs first)
+  const sorted = [...entries].sort((a, b) => {
+    if (userLogin) {
+      if (a[0] === userLogin && b[0] !== userLogin) return 1;
+      if (b[0] === userLogin && a[0] !== userLogin) return -1;
+    }
+    return countOf(b[1]) - countOf(a[1]) || a[0].localeCompare(b[0]);
+  });
   if (!sorted.length) return <div style={{ padding: 8, color: "var(--muted-2)", fontSize: 12 }}>No matches</div>;
 
   return (
@@ -69,6 +81,7 @@ function CheckList({
             <input type="checkbox" checked={selected.has(name)} onChange={() => onToggle(name)} />
             {showSwatch && color ? <span className="label-swatch" style={{ background: `#${color}` }} /> : null}
             {languageDot ? <span className="label-swatch" style={{ borderRadius: "50%", background: getLanguageColor(name) }} /> : null}
+            {showGhAvatar ? <img src={`https://github.com/${name}.png?size=32`} alt="" style={{ width: 16, height: 16, borderRadius: "50%", flexShrink: 0 }} /> : null}
             <span className="label-text">{name}</span>
             <span className="label-count">{countOf(value)}</span>
           </label>
@@ -105,6 +118,7 @@ export function SidebarControls({
   onRepoFiltersChange,
   onReset,
   onClose,
+  authLogin,
 }: SidebarControlsProps) {
   const prMode = tab === "prs";
   const issueMode = tab === "issues" || tab === "kanban";
@@ -137,6 +151,8 @@ export function SidebarControls({
         <CheckList
           entries={[...orgEntries.entries()]}
           selected={orgSelection}
+          showGhAvatar
+          userLogin={authLogin || undefined}
           onToggle={(value) => ticketMode
             ? onActiveFiltersChange({ ...activeFilters, orgs: toggleSetValue(activeFilters.orgs, value) })
             : onRepoFiltersChange({ ...repoFilters, orgs: toggleSetValue(repoFilters.orgs, value) })}

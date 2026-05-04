@@ -515,6 +515,7 @@ export function App() {
         themeLabel={theme[0].toUpperCase() + theme.slice(1)}
         themeIcon={themeIcon(theme)}
         authLogin={authLogin}
+        owners={owners}
         onThemeToggle={() => setTheme(theme === "dark" ? "light" : theme === "light" ? "auto" : "dark")}
         onRefresh={() => loadData(true)}
         onOpenFilters={() => setFiltersOpen(true)}
@@ -537,6 +538,7 @@ export function App() {
           onRepoFiltersChange={(next) => { setRepoFilters(next); setRepoPage(1); }}
           onReset={resetFilters}
           onClose={() => setFiltersOpen(false)}
+          authLogin={authLogin || undefined}
         />
         <main className={`main${dataStale ? " data-stale" : ""}`}>
           {error ? <div className="error">{error}</div> : null}
