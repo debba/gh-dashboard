@@ -53,6 +53,7 @@ import {
 } from "./utils/dashboard";
 import { clampPage } from "./utils/pagination";
 import { formatNumber } from "./utils/format";
+import { clearStatsCache, readStatsCache, writeStatsCache } from "./utils/statsCache";
 
 type Tab = "inbox" | "repos" | "issues" | "prs" | "kanban" | "insights" | "digests";
 type Theme = "dark" | "light" | "auto";
@@ -161,6 +162,7 @@ export function App() {
   const [dailyDigests, setDailyDigests] = useState<DailyDigestEntry[]>([]);
   const [fetchedAt, setFetchedAt] = useState("");
   const [loading, setLoading] = useState(false);
+  const [dataStale, setDataStale] = useState(false);
   const [error, setError] = useState("");
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [theme, setTheme] = useState<Theme>(() => (localStorage.getItem("gh-dash.theme") as Theme) || "dark");
@@ -195,11 +197,27 @@ export function App() {
     const cachedPrs = peek<PullRequestsData>(CACHE_KEY.prs);
     if (cachedPrs) setPullRequests(cachedPrs.pullRequests);
 
+    // Fall back to localStorage when in-memory cache is empty (page refresh)
+    if (!cachedRepos && !cachedIssues && !cachedPrs) {
+      const persisted = readStatsCache();
+      if (persisted) {
+        setRepos(persisted.repos as GhRepo[]);
+        setOwners(persisted.owners);
+        setIssues(persisted.issues as GhIssue[]);
+        setPullRequests(persisted.pullRequests as GhPullRequest[]);
+        if (persisted.fetchedAt) setFetchedAt(persisted.fetchedAt);
+        setDataStale(true);
+      }
+    }
+
     let pending = 3;
     setLoading(true);
     const finish = () => {
       pending -= 1;
-      if (pending <= 0 && abortRef.current === controller) setLoading(false);
+      if (pending <= 0 && abortRef.current === controller) {
+        setLoading(false);
+        setDataStale(false);
+      }
     };
     const handleFailure = (err: unknown) => {
       if (controller.signal.aborted) return;
@@ -264,6 +282,18 @@ export function App() {
 
   useEffect(() => () => abortRef.current?.abort(), []);
 
+  // Persist dashboard data to localStorage for instant display on next page load
+  useEffect(() => {
+    if (repos.length === 0 && issues.length === 0 && pullRequests.length === 0) return;
+    writeStatsCache({
+      repos,
+      owners,
+      issues,
+      pullRequests,
+      fetchedAt,
+    });
+  }, [repos, owners, issues, pullRequests, fetchedAt]);
+
   useEffect(() => {
     if (authState !== "authenticated") return;
     if (tab !== "insights" && tab !== "repos") return;
@@ -306,6 +336,7 @@ export function App() {
       // ignore — UI flips regardless
     }
     invalidateCache();
+    clearStatsCache();
     setAuthState("anonymous");
     setAuthLogin(null);
     setIssues([]);
@@ -491,7 +522,7 @@ export function App() {
           onReset={resetFilters}
           onClose={() => setFiltersOpen(false)}
         />
-        <main className="main">
+        <main className={`main${dataStale ? " data-stale" : ""}`}>
           {error ? <div className="error">{error}</div> : null}
           <div className="view-head">
             <div className="tabs" role="tablist">
