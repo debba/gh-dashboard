@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatBytes, formatNumber, formatRelativeTime } from "../../src/utils/format";
+import { formatBytes, formatExactNumber, formatNumber, formatRelativeTime } from "../../src/utils/format";
 
 describe("format utilities", () => {
   it("formats relative time using the provided clock", () => {
@@ -15,6 +15,11 @@ describe("format utilities", () => {
     expect(formatNumber(999)).toBe("999");
     expect(formatNumber(1_200)).toBe("1.2k");
     expect(formatNumber(2_000_000)).toBe("2M");
+  });
+
+  it("formats exact numbers", () => {
+    expect(formatExactNumber(1_329)).toBe("1,329");
+    expect(formatExactNumber(2_000_000)).toBe("2,000,000");
   });
 
   it("formats byte values", () => {

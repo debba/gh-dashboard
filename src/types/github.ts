@@ -305,6 +305,64 @@ export interface DailyDigestsData {
   digests: DailyDigestEntry[];
 }
 
+export type GhNotificationReason =
+  | "assign"
+  | "author"
+  | "comment"
+  | "ci_activity"
+  | "invitation"
+  | "manual"
+  | "member_feature_requested"
+  | "mention"
+  | "push"
+  | "review_requested"
+  | "security_advisory_credit"
+  | "security_alert"
+  | "state_change"
+  | "subscribed"
+  | "team_mention";
+
+export type GhNotificationSubjectType =
+  | "Issue"
+  | "PullRequest"
+  | "Commit"
+  | "Release"
+  | "RepositoryAdvisory"
+  | "RepositoryDependabotAlertsThread"
+  | "RepositoryVulnerabilityAlert"
+  | "Discussion"
+  | "CheckSuite"
+  | "WorkflowRun";
+
+export interface GhNotification {
+  id: string;
+  unread: boolean;
+  reason: GhNotificationReason;
+  updatedAt: string;
+  lastReadAt: string | null;
+  subject: {
+    title: string;
+    url: string | null;
+    latestCommentUrl: string | null;
+    type: GhNotificationSubjectType | string;
+  };
+  repository: {
+    name: string;
+    nameWithOwner: string;
+    private: boolean;
+    htmlUrl: string;
+  };
+  itemNumber: number | null;
+  itemHtmlUrl: string | null;
+}
+
+export interface NotificationsData {
+  ok: true;
+  notifications: GhNotification[];
+  fetchedAt: string;
+  pollInterval: number;
+}
+
 export interface MentionIssueItem {
   repository: { nameWithOwner: string };
   title: string;

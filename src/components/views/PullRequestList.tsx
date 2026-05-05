@@ -1,8 +1,9 @@
 import type { GhPullRequest } from "../../types/github";
 import { reviewDecisionLabel } from "../../utils/dashboard";
 import { formatNumber, formatRelativeTime } from "../../utils/format";
-import { getOwner, getRepositoryName } from "../../utils/repository";
 import { getContrastColor } from "../../utils/colors";
+import { Avatar } from "../common/Avatar";
+import { PulseIcon } from "../common/Icons";
 
 function reviewBadgeClass(pr: GhPullRequest): string {
   if (pr.reviewDecision === "APPROVED") return "approved";
@@ -16,51 +17,58 @@ export function PullRequestList({ pullRequests }: { pullRequests: GhPullRequest[
   }
 
   return (
-    <div className="list">
+    <div className="data-list">
       {pullRequests.map((pr) => {
-        const owner = getOwner(pr.repository.nameWithOwner);
-        const repo = getRepositoryName(pr.repository.nameWithOwner);
         const stale = Date.now() - new Date(pr.updatedAt).getTime() > 14 * 86_400_000;
+        const author = pr.author?.login || "unknown";
         return (
-          <article className="issue" key={pr.url}>
-            <div className="main-col">
-              <div className="row1">
-                <span className="repo-pill"><span>{owner}</span><span className="sep">/</span><span>{repo}</span></span>
-                <span className="num">#{pr.number}</span>
+          <a className="data-row" href={pr.url} key={pr.url} target="_blank" rel="noreferrer">
+            <Avatar login={pr.author?.login} size={36} />
+            <div className="data-row-body">
+              <div className="data-row-top">
+                <strong className="data-row-author">{author}</strong>
+                <span className="data-row-repo">{pr.repository.nameWithOwner}</span>
+                <span className="data-row-num">#{pr.number}</span>
+                <em>{formatRelativeTime(pr.updatedAt)}</em>
+              </div>
+              <div className="data-row-title">{pr.title}</div>
+              <div className="data-row-meta">
+                <span className="data-kind pull-request"><PulseIcon /> PR</span>
                 {pr.isDraft ? <span className="pr-badge draft">Draft</span> : null}
                 <span className={`pr-badge review ${reviewBadgeClass(pr)}`}>{reviewDecisionLabel(pr.reviewDecision)}</span>
                 {stale ? <span className="stale-badge">Stale</span> : null}
-              </div>
-              <a className="title-link" href={pr.url} target="_blank" rel="noreferrer">{pr.title}</a>
-              <div className="labels">
-                {(pr.labels || []).map((label) => {
+                {(pr.labels || []).slice(0, 3).map((label) => {
                   const color = (label.color || "").replace("#", "");
                   return (
-                    <span className="label" key={label.name} style={color ? { background: `#${color}22`, borderColor: `#${color}55`, color: getContrastColor(color) === "#0a0c12" ? "#ffeecc" : "#e7eaf3" } : undefined}>
-                      <span className="dot" style={{ background: color ? `#${color}` : "var(--muted)" }} />
+                    <span
+                      className="data-label"
+                      key={label.name}
+                      style={color ? {
+                        background: `#${color}22`,
+                        borderColor: `#${color}55`,
+                        color: getContrastColor(color) === "#0a0c12" ? "#4a3212" : "var(--text)",
+                      } : undefined}
+                    >
                       {label.name}
                     </span>
                   );
                 })}
-              </div>
-              <div className="meta-row">
-                {pr.author?.login ? <span className="author-chip"><span className="avatar">{pr.author.login.slice(0, 2).toUpperCase()}</span>{pr.author.login}</span> : null}
-                <span>opened {formatRelativeTime(pr.createdAt)}</span>
-                <span className="sep">·</span>
-                <span>updated {formatRelativeTime(pr.updatedAt)}</span>
-                <span className="sep">·</span>
-                <span className="pr-branch">{pr.headRefName} → {pr.baseRefName}</span>
+                <span className="data-row-spacer" />
+                <span className="pr-diff">
+                  <span className="pr-diff-add">+{formatNumber(pr.additions)}</span>
+                  <span className="pr-diff-del">−{formatNumber(pr.deletions)}</span>
+                </span>
+                <span className="data-row-count">{pr.commentsCount} comments</span>
+                {pr.assignees && pr.assignees.length ? (
+                  <span className="data-row-assignees">
+                    {pr.assignees.slice(0, 3).map((assignee) => (
+                      <Avatar key={assignee.login} login={assignee.login} size={18} />
+                    ))}
+                  </span>
+                ) : null}
               </div>
             </div>
-            <div className="aside-col">
-              <span className="pr-diff">
-                <span className="pr-diff-add">+{formatNumber(pr.additions)}</span>
-                <span className="pr-diff-del">−{formatNumber(pr.deletions)}</span>
-                <em>{formatNumber(pr.changedFiles)} files</em>
-              </span>
-              <span className="comments">{pr.commentsCount} comments</span>
-            </div>
-          </article>
+          </a>
         );
       })}
     </div>

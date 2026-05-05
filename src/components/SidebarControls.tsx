@@ -3,7 +3,7 @@ import type { FacetValue, IssueFilters, PullRequestFilters, RepoFilters } from "
 import { getLanguageColor } from "../utils/colors";
 import { ChevronIcon, CloseIcon, SearchIcon } from "./common/Icons";
 
-type Tab = "issues" | "repos" | "kanban" | "insights" | "digests" | "prs";
+type Tab = "inbox" | "issues" | "repos" | "kanban" | "insights" | "digests" | "prs";
 
 type IssueLikeFacets = {
   orgs: Map<string, number>;
