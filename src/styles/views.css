@@ -139,12 +139,9 @@
     text-decoration: none;
     transition: background-color 60ms ease;
   }
-<<<<<<< feat/localstorage-stats-cache
   .btn.theme-btn > .label,
   .btn.primary > .label { border-color: transparent; }
   .label .dot { width: 7px; height: 7px; border-radius: 50%; }
-=======
->>>>>>> main
 
   @media (min-width: 720px) { .data-row { padding: 14px 18px; } }
 

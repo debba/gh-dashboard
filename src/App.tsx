@@ -145,13 +145,6 @@ function downloadJson(filename: string, rows: unknown[]) {
 type AuthState = "checking" | "anonymous" | "authenticated";
 
 export function App() {
-<<<<<<< feat/localstorage-stats-cache
-  // Read cached filters once — shared across all filter/sort useState initializers below.
-  const [cachedFiltersOnMount] = useState(() => {
-    const raw = readFiltersCache();
-    return raw ? { hydrated: hydrateFilters(raw), sorts: raw.sorts } : null;
-  });
-=======
   const location = useLocation();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -159,7 +152,12 @@ export function App() {
   const routeRepoName = searchParams.get("repo") || "";
   const repoDetailTab = detailTabFromParams(searchParams);
   const routeMetricKind = metricKindFromParams(searchParams);
->>>>>>> main
+
+  // Read cached filters once — shared across all filter/sort useState initializers below.
+  const [cachedFiltersOnMount] = useState(() => {
+    const raw = readFiltersCache();
+    return raw ? { hydrated: hydrateFilters(raw), sorts: raw.sorts } : null;
+  });
 
   const [authState, setAuthState] = useState<AuthState>("checking");
   const [authLogin, setAuthLogin] = useState<string | null>(null);
