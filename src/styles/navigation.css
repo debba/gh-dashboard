@@ -84,6 +84,7 @@
   @keyframes spin { to { transform: rotate(360deg); } }
   .btn .label { display: inline; }
   .auth-btn .label { max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .auth-avatar { width: 20px; height: 20px; border-radius: 50%; flex-shrink: 0; }
   @media (max-width: 900px) {
     .topbar { gap: 10px; }
     .btn { width: 34px; padding: 0; justify-content: center; }
@@ -128,10 +129,21 @@
 
   /* Tabs */
   .tabs {
-    display: inline-flex; background: color-mix(in srgb, var(--panel) 90%, transparent); border: 1px solid var(--border-soft); border-radius: 8px; padding: 3px; gap: 2px;
+    display: flex; background: color-mix(in srgb, var(--panel) 90%, transparent); border: 1px solid var(--border-soft); border-radius: 8px; padding: 3px; gap: 2px;
     box-shadow: inset 0 1px 0 rgba(255,255,255,0.035);
-    max-width: 100%;
+    min-width: 0; max-width: 100%;
     overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scroll-snap-type: x proximity;
+    scrollbar-width: thin;
+  }
+  @media (max-width: 768px) {
+    .tabs {
+      -webkit-mask-image: linear-gradient(to right, black calc(100% - 28px), transparent);
+      mask-image: linear-gradient(to right, black calc(100% - 28px), transparent);
+      padding-right: 24px;
+    }
+    .tab { padding: 7px 10px; font-size: 12px; scroll-snap-align: start; }
   }
   .tab {
     display: inline-flex; align-items: center; gap: 8px;
@@ -152,3 +164,45 @@
     font-variant-numeric: tabular-nums;
   }
   .tab:not(.active) .tab-badge { background: var(--panel-2); color: var(--muted); border: 1px solid var(--border-soft); }
+
+  /* Mobile: icon-only tabs — stretch full width, reveal label on hover */
+  @media (max-width: 640px) {
+    .tabs {
+      -webkit-mask-image: none;
+      mask-image: none;
+      padding-right: 3px;
+      overflow-x: visible;
+      flex-wrap: nowrap;
+      width: 100%;
+    }
+    .tab {
+      font-size: 0;
+      gap: 0;
+      padding: 7px 0;
+      flex: 1 1 0;
+      justify-content: center;
+      overflow: hidden;
+      transition: flex .3s cubic-bezier(0.22, 0.61, 0.36, 1),
+                  gap .3s cubic-bezier(0.22, 0.61, 0.36, 1),
+                  font-size .25s ease .05s,
+                  color .15s ease, background .15s ease;
+    }
+    .tab svg {
+      width: 16px;
+      height: 16px;
+      flex-shrink: 0;
+    }
+    .tab .tab-badge {
+      font-size: 10px;
+      padding: 0 5px;
+      margin-left: 2px;
+    }
+    /* Reveal label smoothly — tab expands, text slides in from left */
+    .tab:hover,
+    .tab:focus-visible,
+    .tab:active {
+      flex: 4 1 0;
+      font-size: 11px;
+      gap: 5px;
+    }
+  }
