@@ -84,7 +84,6 @@
   @keyframes spin { to { transform: rotate(360deg); } }
   .btn .label { display: inline; }
   .auth-btn .label { max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .auth-avatar { width: 20px; height: 20px; border-radius: 50%; flex-shrink: 0; }
   @media (max-width: 900px) {
     .topbar { gap: 10px; }
     .btn { width: 34px; padding: 0; justify-content: center; }
