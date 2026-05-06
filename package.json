@@ -12,7 +12,8 @@
     "serve": "node dist/server.js",
     "start": "node dist/server.js",
     "test": "vitest run",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "version": "node scripts/sync-version.js && conventional-changelog -p angular -i CHANGELOG.md -s && git add CHANGELOG.md src/version.ts"
   },
   "dependencies": {
     "react": "^19.2.5",
@@ -25,6 +26,8 @@
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.1",
     "concurrently": "^9.2.1",
+    "conventional-changelog": "^7.2.0",
+    "conventional-changelog-angular": "^8.3.1",
     "esbuild": "^0.28.0",
     "jsdom": "^29.0.2",
     "tsx": "^4.19.2",

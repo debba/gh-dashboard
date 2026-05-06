@@ -5,17 +5,24 @@ import {
   fetchAuthStatus,
   fetchDailyDigests,
   fetchIssues,
+  fetchNotifications,
   fetchPullRequests,
   fetchRepoInsights,
   fetchRepos,
   logoutAuth,
+  markAllNotificationsRead,
+  markNotificationRead,
 } from "./api/github";
 import { invalidate as invalidateCache, peek, swr } from "./api/cache";
 import { AuthGate } from "./components/AuthGate";
 import { RepositoryDetailsModal, type DetailTab } from "./components/modals/RepositoryDetailsModal";
 import { RepositoryMetricModal, type MetricKind } from "./components/modals/RepositoryMetricModal";
+import { ContributorsModal } from "./components/modals/ContributorsModal";
+import { ChangelogModal } from "./components/modals/ChangelogModal";
+import { WelcomeModal } from "./components/modals/WelcomeModal";
+import { Footer } from "./components/Footer";
 import { TopBar } from "./components/TopBar";
-import { SidebarControls } from "./components/SidebarControls";
+import { SidebarControls, type InboxSidebarState } from "./components/SidebarControls";
 import { Pagination } from "./components/common/Pagination";
 import { BoardIcon, BookIcon, ExportIcon, InboxIcon, IssueIcon, PulseIcon } from "./components/common/Icons";
 import { IssueList } from "./components/views/IssueList";
@@ -29,6 +36,7 @@ import type {
   DailyDigestEntry,
   DailyDigestsData,
   GhIssue,
+  GhNotification,
   GhPullRequest,
   GhRepo,
   IssuesData,
@@ -37,6 +45,7 @@ import type {
   RepoInsightsData,
   ReposData,
 } from "./types/github";
+import { buildInboxItems, INBOX_MAILBOXES, matchesInboxMailbox, mergeNotifications, type InboxMailbox } from "./utils/inbox";
 import {
   buildIssueFacets,
   buildPullRequestFacets,
@@ -172,6 +181,15 @@ export function App() {
   const [dataStale, setDataStale] = useState(false);
   const [error, setError] = useState("");
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [contributorsOpen, setContributorsOpen] = useState(false);
+  const [changelogOpen, setChangelogOpen] = useState(false);
+  const [welcomeOpen, setWelcomeOpen] = useState(() => !localStorage.getItem("gh-dash.welcomeSeen"));
+  const [notifications, setNotifications] = useState<GhNotification[]>([]);
+  const [pollInterval, setPollInterval] = useState(60);
+  const [mailbox, setMailbox] = useState<InboxMailbox>("inbox");
+  const [inboxPage, setInboxPage] = useState(1);
+  const [inboxPageSize, setInboxPageSize] = useState(Number(localStorage.getItem("gh-dash.inboxPageSize")) || 20);
+  const [inboxSearch, setInboxSearch] = useState("");
   const [theme, setTheme] = useState<Theme>(() => (localStorage.getItem("gh-dash.theme") as Theme) || "dark");
   const [issueFilters, setIssueFilters] = useState<IssueFilters>(() => cachedFiltersOnMount?.hydrated.issueFilters ?? defaultIssueFilters());
   const [prFilters, setPrFilters] = useState<PullRequestFilters>(() => cachedFiltersOnMount?.hydrated.prFilters ?? defaultPrFilters());
@@ -386,13 +404,83 @@ export function App() {
   useEffect(() => localStorage.setItem("gh-dash.issuesPageSize", String(issuePageSize)), [issuePageSize]);
   useEffect(() => localStorage.setItem("gh-dash.prsPageSize", String(prPageSize)), [prPageSize]);
   useEffect(() => localStorage.setItem("gh-dash.reposPageSize", String(repoPageSize)), [repoPageSize]);
+  useEffect(() => localStorage.setItem("gh-dash.inboxPageSize", String(inboxPageSize)), [inboxPageSize]);
+
+  const refreshNotifications = useCallback(async (fresh = false) => {
+    try {
+      const data = await fetchNotifications(fresh);
+      setNotifications(data.notifications);
+      if (data.pollInterval) setPollInterval(data.pollInterval);
+    } catch {
+      // silent — Inbox still works without notifications
+    }
+  }, []);
+
+  useEffect(() => {
+    if (authState !== "authenticated") return;
+    void refreshNotifications();
+  }, [authState, refreshNotifications]);
+
+  useEffect(() => {
+    if (authState !== "authenticated" || !pollInterval) return;
+    const id = window.setInterval(() => { void refreshNotifications(); }, Math.max(30, pollInterval) * 1000);
+    return () => window.clearInterval(id);
+  }, [authState, pollInterval, refreshNotifications]);
+
+  const handleMarkRead = useCallback(async (threadId: string) => {
+    setNotifications((prev) => prev.map((entry) => (entry.id === threadId ? { ...entry, unread: false } : entry)));
+    try {
+      await markNotificationRead(threadId);
+    } catch {
+      void refreshNotifications(true);
+    }
+  }, [refreshNotifications]);
+
+  const userLoginValue = owners[0] || "";
+  const inboxItems = useMemo(() => {
+    const base = buildInboxItems({ issues, pullRequests, userLogin: userLoginValue });
+    return mergeNotifications(base, notifications);
+  }, [issues, pullRequests, userLoginValue, notifications]);
+  const mailboxItems = useMemo(
+    () => inboxItems.filter((item) => matchesInboxMailbox(item, mailbox)),
+    [inboxItems, mailbox],
+  );
+  const inboxCounts = useMemo(() => {
+    const counts: Record<InboxMailbox, number> = {} as Record<InboxMailbox, number>;
+    for (const entry of INBOX_MAILBOXES) {
+      counts[entry.key] = inboxItems.filter((item) => matchesInboxMailbox(item, entry.key)).length;
+    }
+    return counts;
+  }, [inboxItems]);
+  const inboxUnreadCount = useMemo(() => inboxItems.filter((item) => item.unread).length, [inboxItems]);
+
+  const handleMarkAllRead = useCallback(async () => {
+    if (!inboxUnreadCount) return;
+    if (!window.confirm(`Mark ${inboxUnreadCount} notification${inboxUnreadCount === 1 ? "" : "s"} as read on GitHub?`)) return;
+    const previous = notifications;
+    setNotifications((prev) => prev.map((entry) => ({ ...entry, unread: false })));
+    try {
+      await markAllNotificationsRead();
+    } catch {
+      setNotifications(previous);
+    }
+  }, [inboxUnreadCount, notifications]);
+
+  const inboxSidebar: InboxSidebarState = {
+    mailbox,
+    counts: inboxCounts,
+    totalCount: inboxItems.length,
+    unreadCount: inboxUnreadCount,
+    onMailboxChange: (next) => { setMailbox(next); setInboxPage(1); },
+    onMarkAllRead: () => void handleMarkAllRead(),
+  };
 
   // Persist sidebar filters and sort order to localStorage
   useEffect(() => {
     writeFiltersCache(repoFilters, issueFilters, prFilters, { issueSort, prSort, repoSort });
   }, [repoFilters, issueFilters, prFilters, issueSort, prSort, repoSort]);
 
-  const userLogin = owners[0] || "";
+  const userLogin = userLoginValue;
   const issueFacets = useMemo(() => buildIssueFacets(issues), [issues]);
   const prFacets = useMemo(() => buildPullRequestFacets(pullRequests), [pullRequests]);
   const repoFacets = useMemo(() => buildRepoFacets(repos), [repos]);
@@ -443,16 +531,21 @@ export function App() {
   }
 
   const search =
-    tab === "repos" || tab === "insights" || tab === "digests"
-      ? repoFilters.search
-      : tab === "prs"
-        ? prFilters.search
-        : issueFilters.search;
+    tab === "inbox"
+      ? inboxSearch
+      : tab === "repos" || tab === "insights" || tab === "digests"
+        ? repoFilters.search
+        : tab === "prs"
+          ? prFilters.search
+          : issueFilters.search;
   const subtitle = `${issues.length} issues · ${pullRequests.length} PRs · ${repos.length} repos · ${owners.length} orgs${loading ? " · loading…" : ""}`;
   const lastUpdated = fetchedAt ? `updated ${new Date(fetchedAt).toLocaleTimeString()}` : "";
 
   function setSearch(value: string) {
-    if (tab === "repos" || tab === "insights" || tab === "digests") {
+    if (tab === "inbox") {
+      setInboxSearch(value);
+      setInboxPage(1);
+    } else if (tab === "repos" || tab === "insights" || tab === "digests") {
       setRepoFilters({ ...repoFilters, search: value });
       setRepoPage(1);
     } else if (tab === "prs") {
@@ -522,7 +615,7 @@ export function App() {
         onLogout={() => void handleLogout()}
       />
       <div className="sidebar-backdrop" onClick={() => setFiltersOpen(false)} />
-      <div className={`layout ${tab === "inbox" ? "layout-inbox" : ""}`}>
+      <div className="layout">
         <SidebarControls
           tab={tab}
           search={search}
@@ -539,6 +632,7 @@ export function App() {
           onReset={resetFilters}
           onClose={() => setFiltersOpen(false)}
           authLogin={authLogin || undefined}
+          inbox={inboxSidebar}
         />
         <main className={`main${dataStale ? " data-stale" : ""}`}>
           {error ? <div className="error">{error}</div> : null}
@@ -555,11 +649,17 @@ export function App() {
 
           {tab === "inbox" ? (
             <InboxView
-              issues={issues}
-              pullRequests={pullRequests}
-              userLogin={userLogin}
+              items={mailboxItems}
+              mailboxLabel={INBOX_MAILBOXES.find((entry) => entry.key === mailbox)?.label || "Inbox"}
+              search={inboxSearch}
+              page={inboxPage}
+              pageSize={inboxPageSize}
               reposByName={reposByName}
               onRepoClick={openRepoModal}
+              onMarkRead={(threadId) => void handleMarkRead(threadId)}
+              onRefresh={() => void refreshNotifications(true)}
+              onPageChange={setInboxPage}
+              onPageSizeChange={(size) => { setInboxPageSize(size); setInboxPage(1); }}
             />
           ) : null}
 
@@ -702,6 +802,25 @@ export function App() {
           {tab === "kanban" ? <KanbanView /> : null}
         </main>
       </div>
+      <Footer
+        onContributorsClick={() => setContributorsOpen(true)}
+        onChangelogClick={() => setChangelogOpen(true)}
+      />
+      {welcomeOpen ? (
+        <WelcomeModal
+          onClose={() => {
+            localStorage.setItem("gh-dash.welcomeSeen", "1");
+            setWelcomeOpen(false);
+          }}
+          onViewChangelog={() => {
+            localStorage.setItem("gh-dash.welcomeSeen", "1");
+            setWelcomeOpen(false);
+            setChangelogOpen(true);
+          }}
+        />
+      ) : null}
+      {contributorsOpen ? <ContributorsModal onClose={() => setContributorsOpen(false)} /> : null}
+      {changelogOpen ? <ChangelogModal onClose={() => setChangelogOpen(false)} /> : null}
       {repoModal ? (
         <RepositoryDetailsModal
           repo={repoModal}

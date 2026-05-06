@@ -4,7 +4,9 @@ import type { GhRepo } from "../../types/github";
 import { getContrastColor } from "../../utils/colors";
 import { formatNumber, formatRelativeTime } from "../../utils/format";
 import { searchInboxItems, type InboxItem } from "../../utils/inbox";
+import { clampPage } from "../../utils/pagination";
 import { Avatar } from "../common/Avatar";
+import { Pagination } from "../common/Pagination";
 import {
   BookIcon,
   CheckIcon,
@@ -39,6 +41,13 @@ interface TriageWorkspaceProps {
   searchPlaceholder?: string;
   onMarkRead?: (threadId: string) => void;
   onRefresh?: () => void;
+  search?: string;
+  onSearchChange?: (value: string) => void;
+  hideInternalSearch?: boolean;
+  page?: number;
+  pageSize?: number;
+  onPageChange?: (page: number) => void;
+  onPageSizeChange?: (size: number) => void;
 }
 
 function kindLabel(item: InboxItem): string {
@@ -232,8 +241,17 @@ export function TriageWorkspace({
   searchPlaceholder = "Search",
   onMarkRead,
   onRefresh,
+  search: searchProp,
+  onSearchChange,
+  hideInternalSearch,
+  page: pageProp,
+  pageSize: pageSizeProp,
+  onPageChange,
+  onPageSizeChange,
 }: TriageWorkspaceProps) {
-  const [search, setSearch] = useState("");
+  const [internalSearch, setInternalSearch] = useState("");
+  const search = searchProp !== undefined ? searchProp : internalSearch;
+  const setSearch = onSearchChange ?? setInternalSearch;
   const [selectedId, setSelectedId] = useState("");
   const [checked, setChecked] = useState<Set<string>>(new Set());
   const [density, setDensity] = useState<Density>(() => readStoredDensity());
@@ -242,7 +260,13 @@ export function TriageWorkspace({
   const searchInputRef = useRef<HTMLInputElement | null>(null);
   const rowRefs = useRef<Map<string, HTMLElement>>(new Map());
 
-  const visibleItems = useMemo(() => searchInboxItems(items, search), [items, search]);
+  const filteredItems = useMemo(() => searchInboxItems(items, search), [items, search]);
+  const paginated = pageSizeProp !== undefined && pageProp !== undefined;
+  const safePage = paginated ? clampPage(pageProp!, filteredItems.length, pageSizeProp!) : 1;
+  const visibleItems = useMemo(() => {
+    if (!paginated) return filteredItems;
+    return filteredItems.slice((safePage - 1) * pageSizeProp!, safePage * pageSizeProp!);
+  }, [filteredItems, paginated, safePage, pageSizeProp]);
   const selectedItem = visibleItems.find((item) => item.id === selectedId) || visibleItems[0];
   const selectedRepo = selectedItem ? reposByName?.get(selectedItem.repository.nameWithOwner) : undefined;
   const checkedItems = useMemo(
@@ -378,16 +402,18 @@ export function TriageWorkspace({
             <strong>{title}</strong>
             <span>{formatNumber(visibleItems.length)} items</span>
           </div>
-          <label className="inbox-search">
-            <SearchIcon />
-            <input
-              ref={searchInputRef}
-              type="search"
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-              placeholder={searchPlaceholder}
-            />
-          </label>
+          {hideInternalSearch ? null : (
+            <label className="inbox-search">
+              <SearchIcon />
+              <input
+                ref={searchInputRef}
+                type="search"
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+                placeholder={searchPlaceholder}
+              />
+            </label>
+          )}
           <div className="inbox-toolbar">
             <label className="inbox-checkbox" title="Select all">
               <input
@@ -489,6 +515,18 @@ export function TriageWorkspace({
             </div>
           )}
         </div>
+        {paginated && filteredItems.length > pageSizeProp! ? (
+          <div className="inbox-list-pagination">
+            <Pagination
+              totalItems={filteredItems.length}
+              page={safePage}
+              pageSize={pageSizeProp!}
+              onPageChange={onPageChange ?? (() => {})}
+              onPageSizeChange={onPageSizeChange ?? (() => {})}
+              showPageSize={false}
+            />
+          </div>
+        ) : null}
       </section>
 
       <TriagePreview item={selectedItem} repo={selectedRepo} onRepoClick={onRepoClick} onMarkRead={onMarkRead} />

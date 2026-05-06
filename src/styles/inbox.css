@@ -1,33 +1,60 @@
   /* ===================== INBOX (mail-client style) ===================== */
 
-  .layout.layout-inbox {
-    grid-template-columns: minmax(0, 1fr);
-    gap: 0;
-    padding: 0;
-  }
-
-  .layout.layout-inbox .sidebar,
-  .layout.layout-inbox .sidebar-backdrop {
-    display: none;
-  }
-
-  .layout.layout-inbox .main {
-    min-height: calc(100vh - 66px);
-  }
-
-  .layout.layout-inbox .view-head {
-    margin: 0;
-    padding: 8px 12px;
-    border-bottom: 1px solid var(--border-soft);
-    background: var(--panel);
-  }
-
   .view-inbox {
     display: grid;
-    grid-template-columns: 220px minmax(320px, 420px) minmax(0, 1fr) minmax(260px, 320px);
-    min-height: calc(100vh - 122px);
+    grid-template-columns: minmax(320px, 420px) minmax(0, 1fr) minmax(260px, 320px);
+    min-height: min(760px, calc(100vh - 220px));
+    overflow: hidden;
     background: var(--panel);
+    border: 1px solid var(--border-soft);
+    border-radius: 9px;
     color: var(--text);
+  }
+
+  /* Sidebar mailbox list (rendered inside SidebarControls when tab=inbox) */
+  .mailbox-list {
+    display: grid;
+    gap: 2px;
+    padding: 0 8px;
+  }
+  .mailbox-item {
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    width: 100%; min-height: 32px;
+    border: 0; border-radius: 7px;
+    background: transparent; color: var(--muted);
+    cursor: pointer; padding: 6px 9px; text-align: left;
+  }
+  .mailbox-item:hover { background: var(--hover-surface); color: var(--text); }
+  .mailbox-item.active {
+    background: var(--accent-faint); color: var(--text);
+    box-shadow: inset 2px 0 0 var(--accent);
+  }
+  .mailbox-item span {
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    font-size: 13px; font-weight: 600;
+  }
+  .mailbox-item strong {
+    min-width: 26px; padding: 1px 7px; border-radius: 999px;
+    background: var(--panel-2); color: var(--muted);
+    font-size: 11px; font-variant-numeric: tabular-nums; text-align: center;
+  }
+  .mailbox-item.active strong { background: var(--accent-soft); color: var(--accent); }
+  .mailbox-action {
+    margin: 14px 12px 8px;
+    border: 1px solid var(--border-soft); border-radius: 7px;
+    background: var(--panel); color: var(--text);
+    cursor: pointer; padding: 8px 10px;
+    font-size: 12.5px; font-weight: 600;
+  }
+  .mailbox-action:hover { border-color: var(--accent); color: var(--accent); }
+
+  .inbox-list-pagination {
+    border-top: 1px solid var(--border-soft);
+    padding: 6px 10px;
+    background: var(--panel-2);
+  }
+  .inbox-list-pagination .pagination {
+    border: 0; padding: 0; margin: 0; gap: 6px;
   }
 
   /* Density tokens — Spark/Apple Mail-like compact-to-comfortable scale */
@@ -217,7 +244,7 @@
     border-right: 1px solid var(--border-soft);
     background: var(--panel);
     display: grid;
-    grid-template-rows: auto minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr) auto;
   }
 
   .inbox-list-head {

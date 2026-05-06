@@ -1,0 +1,111 @@
+  .app-footer {
+    border-top: 1px solid var(--border-soft);
+    background: var(--panel);
+    padding: 14px 16px;
+    margin-top: auto;
+    font-size: 12.5px;
+    color: var(--muted);
+  }
+  @media (min-width: 720px) {
+    .app-footer { padding: 14px clamp(18px, 2vw, 34px); }
+  }
+  @media (min-width: 1800px) {
+    .app-footer { padding-inline: 32px; }
+  }
+  .app-footer-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .app-footer-credit a {
+    color: var(--text);
+    font-weight: 600;
+  }
+  .app-footer-credit a:hover { color: var(--accent-2); text-decoration: none; }
+  .app-footer-sep { margin: 0 8px; opacity: 0.6; }
+  .app-footer-version {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 11.5px;
+    color: var(--muted-2);
+  }
+  .app-footer-links {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  .app-footer-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px;
+    border-radius: 7px;
+    border: 1px solid var(--border-soft);
+    background: var(--panel-2);
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    text-decoration: none;
+    transition: color 0.15s, border-color 0.15s, background 0.15s;
+  }
+  .app-footer-link:hover {
+    color: var(--text);
+    border-color: var(--button-hover-border);
+    background: var(--panel-3);
+    text-decoration: none;
+  }
+  @media (max-width: 720px) {
+    .app-footer-inner { justify-content: center; text-align: center; }
+  }
+
+  /* Welcome modal */
+  .modal-icon.welcome { background: linear-gradient(135deg, var(--accent), var(--accent-2)); font-weight: 800; font-size: 14px; }
+  .welcome-modal { height: auto; max-height: min(86vh, 720px); width: min(560px, calc(100vw - 32px)); }
+  .welcome-body { padding: 22px 24px; display: flex; flex-direction: column; gap: 16px; }
+  .welcome-lead { margin: 0; font-size: 14px; line-height: 1.55; color: var(--text); }
+  .welcome-list { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 10px; color: var(--muted); font-size: 13px; line-height: 1.5; }
+  .welcome-list strong { color: var(--text); font-weight: 600; }
+  .welcome-meta { font-size: 11.5px; color: var(--muted-2); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+  .welcome-foot {
+    display: flex; justify-content: flex-end; gap: 10px;
+    padding: 12px 18px; border-top: 1px solid var(--border-soft);
+    background: var(--panel-2);
+  }
+  .welcome-foot .btn {
+    border-radius: 7px; padding: 8px 14px; font-size: 13px; font-weight: 600;
+    border: 1px solid var(--border-soft); background: var(--panel); color: var(--text);
+    cursor: pointer; transition: background 0.15s, border-color 0.15s;
+  }
+  .welcome-foot .btn.ghost { background: var(--panel); color: var(--muted); }
+  .welcome-foot .btn.ghost:hover { background: var(--panel-3); color: var(--text); }
+  .welcome-foot .btn.primary {
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    border-color: transparent; color: var(--color-neutral-0);
+  }
+  .welcome-foot .btn.primary:hover { filter: brightness(1.08); }
+
+  /* Changelog modal */
+  .changelog-body { padding: 18px 22px 24px; }
+  .changelog-entry + .changelog-entry { margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--border-soft); }
+  .changelog-version { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
+  .changelog-version-tag {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 14px; font-weight: 700; color: var(--text);
+    background: var(--accent-faint); border: 1px solid var(--accent-border);
+    padding: 3px 9px; border-radius: 6px;
+  }
+  .changelog-version-date { color: var(--muted-2); font-size: 12px; }
+  .changelog-version-link { margin-left: auto; font-size: 12px; color: var(--accent-2); }
+  .changelog-section { margin-bottom: 16px; }
+  .changelog-section h4 {
+    margin: 0 0 8px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em;
+    color: var(--muted); font-weight: 700;
+  }
+  .changelog-section ul { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 6px; }
+  .changelog-section li { font-size: 13px; color: var(--text); line-height: 1.5; }
+  .changelog-scope { color: var(--accent); font-weight: 600; }
+  .changelog-commit { color: var(--muted-2); font-size: 11px; margin-left: 4px; }
+  .changelog-commit:hover { color: var(--accent-2); text-decoration: none; }
