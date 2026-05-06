@@ -13,6 +13,7 @@ interface TopBarProps {
   onRefresh: () => void;
   onOpenFilters: () => void;
   onLogout: () => void;
+  canLogout?: boolean;
 }
 
 export function TopBar({
@@ -27,6 +28,7 @@ export function TopBar({
   onRefresh,
   onOpenFilters,
   onLogout,
+  canLogout = true,
 }: TopBarProps) {
   // Orgs are all owners except the user's own login
   const orgs = owners.filter((o) => o !== authLogin);
@@ -65,10 +67,17 @@ export function TopBar({
           <svg className={loading ? "spin" : ""} width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 4 23 10 17 10" /><polyline points="1 20 1 14 7 14" /><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" /></svg>
           <span className="label">{loading ? "Loading" : "Refresh"}</span>
         </button>
-        <button className="btn auth-btn" aria-label="Sign out" title={authLogin ? `Signed in as ${authLogin}` : "Sign out"} onClick={onLogout}>
-          <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><polyline points="16 17 21 12 16 7" /><line x1="21" y1="12" x2="9" y2="12" /></svg>
-          <span className="label">{authLogin || "Sign out"}</span>
-        </button>
+        {canLogout ? (
+          <button className="btn auth-btn" aria-label="Sign out" title={authLogin ? `Signed in as ${authLogin}` : "Sign out"} onClick={onLogout}>
+            <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><polyline points="16 17 21 12 16 7" /><line x1="21" y1="12" x2="9" y2="12" /></svg>
+            <span className="label">{authLogin || "Sign out"}</span>
+          </button>
+        ) : (
+          <span className="btn auth-btn" aria-label="Signed in" title={authLogin ? `Signed in as ${authLogin} — sign out from your gh CLI or environment` : "Authenticated externally"} style={{ cursor: "default", opacity: 0.85 }}>
+            <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5" /></svg>
+            <span className="label">{authLogin || "Authenticated"}</span>
+          </span>
+        )}
       </div>
     </div>
   );

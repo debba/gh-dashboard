@@ -1,4 +1,5 @@
-import { clearToken, readToken, writeToken, type StoredToken } from "./tokenStore";
+import { getAuthMode, getProviderStatus, resetExternalAuthCaches } from "./authProvider";
+import { clearToken, writeToken, type StoredToken } from "./tokenStore";
 
 const DEVICE_CODE_URL = "https://github.com/login/device/code";
 const ACCESS_TOKEN_URL = "https://github.com/login/oauth/access_token";
@@ -172,12 +173,21 @@ export async function pollDeviceFlow(): Promise<DeviceFlowPollResult> {
 export async function logout(): Promise<void> {
   pending = null;
   await clearToken();
+  resetExternalAuthCaches();
 }
 
-export async function authStatus(): Promise<{ authenticated: boolean; login: string | null; scope: string | null }> {
-  const token = await readToken();
-  if (!token) return { authenticated: false, login: null, scope: null };
-  return { authenticated: true, login: token.login ?? null, scope: token.scope ?? null };
+export interface AuthStatusPayload {
+  authenticated: boolean;
+  login: string | null;
+  scope: string | null;
+  mode: ReturnType<typeof getAuthMode>;
+  detail?: string | null;
+}
+
+export async function authStatus(): Promise<AuthStatusPayload> {
+  const mode = getAuthMode();
+  const status = await getProviderStatus();
+  return { mode, ...status };
 }
 
 export function isClientIdConfigured(): boolean {

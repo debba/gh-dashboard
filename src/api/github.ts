@@ -56,12 +56,16 @@ function withSignal(signal?: AbortSignal): RequestInit | undefined {
   return signal ? { signal } : undefined;
 }
 
+export type AuthMode = "device" | "gh-cli" | "token";
+
 export interface AuthStatus {
   ok: true;
   authenticated: boolean;
   login: string | null;
   scope: string | null;
   clientIdConfigured: boolean;
+  mode: AuthMode;
+  detail?: string | null;
 }
 
 export interface DeviceFlowStart {

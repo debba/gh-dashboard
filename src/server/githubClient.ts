@@ -1,4 +1,4 @@
-import { readToken } from "./tokenStore";
+import { getActiveToken } from "./authProvider";
 
 const API_ROOT = "https://api.github.com";
 const GRAPHQL_URL = `${API_ROOT}/graphql`;
@@ -12,9 +12,14 @@ export class AuthRequiredError extends Error {
 }
 
 export async function getToken(): Promise<string> {
-  const stored = await readToken();
-  if (!stored?.accessToken) throw new AuthRequiredError();
-  return stored.accessToken;
+  try {
+    const token = await getActiveToken();
+    if (!token) throw new AuthRequiredError();
+    return token;
+  } catch (error) {
+    if (error instanceof AuthRequiredError) throw error;
+    throw new AuthRequiredError((error as Error).message);
+  }
 }
 
 function authHeaders(token: string, extra?: Record<string, string>): Record<string, string> {

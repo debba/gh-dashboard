@@ -26,6 +26,7 @@ import {
   pollDeviceFlow,
   startDeviceFlow,
 } from "./server/oauth";
+import { getAuthMode } from "./server/authProvider";
 import { send, sendJson, sendJsonCacheable, sendStaticFile } from "./server/http";
 import {
   getNotificationsCached,
@@ -784,6 +785,12 @@ async function handleAuthStatus(res: ServerResponse): Promise<void> {
 
 async function handleAuthStart(req: IncomingMessage, res: ServerResponse): Promise<void> {
   if (req.method !== "POST") return sendJson(res, 405, { ok: false, error: "POST required" });
+  if (getAuthMode() !== "device") {
+    return sendJson(res, 400, {
+      ok: false,
+      error: `Device flow is disabled in '${getAuthMode()}' auth mode.`,
+    });
+  }
   if (!isClientIdConfigured()) {
     return sendJson(res, 400, {
       ok: false,
@@ -800,6 +807,12 @@ async function handleAuthStart(req: IncomingMessage, res: ServerResponse): Promi
 
 async function handleAuthPoll(req: IncomingMessage, res: ServerResponse): Promise<void> {
   if (req.method !== "POST") return sendJson(res, 405, { ok: false, error: "POST required" });
+  if (getAuthMode() !== "device") {
+    return sendJson(res, 400, {
+      ok: false,
+      error: `Device flow is disabled in '${getAuthMode()}' auth mode.`,
+    });
+  }
   try {
     const result = await pollDeviceFlow();
     if (result.status === "ok") invalidateDataCache();
@@ -811,6 +824,12 @@ async function handleAuthPoll(req: IncomingMessage, res: ServerResponse): Promis
 
 async function handleAuthLogout(req: IncomingMessage, res: ServerResponse): Promise<void> {
   if (req.method !== "POST") return sendJson(res, 405, { ok: false, error: "POST required" });
+  if (getAuthMode() !== "device") {
+    return sendJson(res, 400, {
+      ok: false,
+      error: `Logout is not available in '${getAuthMode()}' auth mode. Sign out via your gh CLI or unset the env token.`,
+    });
+  }
   await logout();
   invalidateDataCache();
   invalidateNotificationsCache();
@@ -1001,4 +1020,5 @@ createServer((req, res) => {
   });
 }).listen(PORT, HOST, () => {
   console.log(`GitHub Issues Dashboard -> http://${HOST}:${PORT}`);
+  console.log(`Auth mode: ${getAuthMode()}`);
 });

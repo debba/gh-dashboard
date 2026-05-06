@@ -170,6 +170,7 @@ export function App() {
 
   const [authState, setAuthState] = useState<AuthState>("checking");
   const [authLogin, setAuthLogin] = useState<string | null>(null);
+  const [authMode, setAuthMode] = useState<"device" | "gh-cli" | "token">("device");
   const [issues, setIssues] = useState<GhIssue[]>([]);
   const [pullRequests, setPullRequests] = useState<GhPullRequest[]>([]);
   const [repos, setRepos] = useState<GhRepo[]>([]);
@@ -293,6 +294,7 @@ export function App() {
   useEffect(() => {
     void fetchAuthStatus()
       .then((status) => {
+        setAuthMode(status.mode);
         if (status.authenticated) {
           setAuthLogin(status.login);
           setAuthState("authenticated");
@@ -613,6 +615,7 @@ export function App() {
         onRefresh={() => loadData(true)}
         onOpenFilters={() => setFiltersOpen(true)}
         onLogout={() => void handleLogout()}
+        canLogout={authMode === "device"}
       />
       <div className="sidebar-backdrop" onClick={() => setFiltersOpen(false)} />
       <div className="layout">

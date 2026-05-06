@@ -100,6 +100,8 @@ export function AuthGate({ onAuthenticated }: AuthGateProps) {
   }
 
   const clientMissing = status?.clientIdConfigured === false;
+  const mode = status?.mode ?? "device";
+  const externalMode = mode === "gh-cli" || mode === "token";
 
   return (
     <div className="auth-gate">
@@ -114,7 +116,33 @@ export function AuthGate({ onAuthenticated }: AuthGateProps) {
           to continue.
         </p>
 
-        {clientMissing ? (
+        {externalMode ? (
+          <div className="auth-error">
+            <strong>
+              {mode === "gh-cli"
+                ? "Authentication via gh CLI is not ready."
+                : "GITHUB_TOKEN is not available."}
+            </strong>
+            <p>
+              {mode === "gh-cli" ? (
+                <>
+                  The server is configured with <code>GH_AUTH_MODE=gh-cli</code>. Make sure the{" "}
+                  <a href="https://cli.github.com/" target="_blank" rel="noreferrer">gh CLI</a>
+                  {" "}is installed and you are signed in:
+                  <br />
+                  <code>gh auth login</code>
+                  {", "}then reload this page.
+                </>
+              ) : (
+                <>
+                  The server is configured with <code>GH_AUTH_MODE=token</code>. Export a personal
+                  access token as <code>GITHUB_TOKEN</code> and restart the server.
+                </>
+              )}
+            </p>
+            {status?.detail ? <p><small>{status.detail}</small></p> : null}
+          </div>
+        ) : clientMissing ? (
           <div className="auth-error">
             <strong>GITHUB_CLIENT_ID is not set.</strong>
             <p>
@@ -123,12 +151,14 @@ export function AuthGate({ onAuthenticated }: AuthGateProps) {
                 github.com/settings/developers
               </a>
               , enable Device Flow, then export <code>GITHUB_CLIENT_ID</code> and restart the
-              server.
+              server. Alternatively, set <code>GH_AUTH_MODE=gh-cli</code> to reuse your local
+              {" "}<code>gh</code> CLI session, or <code>GH_AUTH_MODE=token</code> with a
+              {" "}<code>GITHUB_TOKEN</code>.
             </p>
           </div>
         ) : null}
 
-        {phase === "idle" || phase === "error" ? (
+        {!externalMode && (phase === "idle" || phase === "error") ? (
           <button className="auth-primary" onClick={() => void start()} disabled={clientMissing}>
             Continue with GitHub
           </button>

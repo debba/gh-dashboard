@@ -113,12 +113,24 @@ The server reads its configuration from environment variables:
 
 | Variable               | Required | Default                                        | Purpose                                          |
 | ---------------------- | -------- | ---------------------------------------------- | ------------------------------------------------ |
-| `GITHUB_CLIENT_ID`     | yes      | —                                              | Client ID of your GitHub OAuth App (Device Flow) |
-| `GITHUB_OAUTH_SCOPES`  | no       | `repo read:org project read:user user:email`   | OAuth scopes requested at sign-in                |
+| `GH_AUTH_MODE`         | no       | `device`                                       | Auth source: `device` (OAuth Device Flow), `gh-cli` (reuse local `gh` CLI), or `token` (use `GITHUB_TOKEN`). Aliases accepted: `GITHUB_AUTH_MODE`, `GITHUB_MODE`. |
+| `GITHUB_CLIENT_ID`     | only `device` | —                                         | Client ID of your GitHub OAuth App (Device Flow) |
+| `GITHUB_OAUTH_SCOPES`  | no       | `repo read:org project read:user user:email`   | OAuth scopes requested at sign-in (Device Flow)  |
+| `GITHUB_TOKEN`         | only `token` | —                                          | Personal access token used when `GH_AUTH_MODE=token` |
 | `HOST`                 | no       | `127.0.0.1`                                    | Interface the server binds to                    |
 | `PORT`                 | no       | `8765`                                         | Port the server listens on                       |
 | `OPENAI_API_KEY`       | no       | —                                              | Enables AI-generated daily digest narratives     |
 | `OPENAI_DIGEST_MODEL`  | no       | `gpt-4.1-mini`                                 | Model used for digest narratives                 |
+
+### Authentication modes
+
+The dashboard can obtain a GitHub token in three different ways. Pick the one that fits your setup:
+
+- **`device` (default)** — OAuth App + Device Flow, as described above. The token is stored under `~/.gh-issues-dashboard/` and refreshed via the in-app sign-in screen. Requires `GITHUB_CLIENT_ID`.
+- **`gh-cli`** — if you already use the [GitHub CLI](https://cli.github.com/), set `GH_AUTH_MODE=gh-cli` and the server will read the token by running `gh auth token` on each request (cached in-process for 60s). No OAuth App is needed; the scopes are whatever your `gh` session already has. Run `gh auth refresh -h github.com -s repo,read:org,project` if you need extra scopes.
+- **`token`** — bring-your-own personal access token. Set `GH_AUTH_MODE=token` and export `GITHUB_TOKEN=<your-pat>`. Useful for headless / CI-style deployments.
+
+In `gh-cli` and `token` modes the device-flow sign-in screen is hidden; the server treats the configured source as authoritative.
 
 Tokens and snapshots are persisted under `~/.gh-issues-dashboard/`.
 
