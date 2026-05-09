@@ -1,3 +1,13 @@
+## [1.0.2](https://github.com/debba/gh-dashboard/compare/v1.0.1...v1.0.2) (2026-05-09)
+
+
+### Features
+
+* **auth:** support gh-cli and token auth modes ([365622e](https://github.com/debba/gh-dashboard/commit/365622e173cdbe62431fa2c5f54e785c00cda056)), closes [#cli](https://github.com/debba/gh-dashboard/issues/cli)
+* **ci:** add CI health dashboard and API ([ebcd4da](https://github.com/debba/gh-dashboard/commit/ebcd4da486a4ec7bef2ba723ca5c199002ac4831))
+* **digests:** support weekly and monthly digest periods ([f50ea9a](https://github.com/debba/gh-dashboard/commit/f50ea9aa6573a16127fd0873c2352eebaaf7ad9b))
+* **ui:** add command palette with Cmd+K shortcut and search ([bd4097f](https://github.com/debba/gh-dashboard/commit/bd4097f2e2e1c13f725a76bea342c2cbb38ed763))
+
 ## 1.0.1 (2026-05-06)
 
 
