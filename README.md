@@ -8,6 +8,10 @@
   <a href="https://discord.gg/YrZPHAwMSG"><img src="https://img.shields.io/discord/1470772941296894128?color=5865F2&logo=discord&logoColor=white&label=Discord" alt="Discord" /></a>
 </p>
 
+<p align="center">
+  <a href="https://repostars.dev/?repos=debba%2Fgh-dashboard&theme=dark"><img src="https://repostars.dev/api/embed?repo=debba%2Fgh-dashboard&theme=dark" alt="RepoStars" /></a>
+</p>
+
 An open-source dashboard to explore your GitHub repositories, issues, pull requests, traffic, and CI activity from a single interface.
 
 ## Demo
