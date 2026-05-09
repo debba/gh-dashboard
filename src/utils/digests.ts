@@ -116,6 +116,44 @@ export function buildDailyRepoDigestMarkdown(digest: DailyRepoDigest): string {
   return toMarkdownDigest(digest);
 }
 
+export type DigestPeriod = "day" | "week" | "month";
+
+function isoWeekKey(date: string): string {
+  // Returns "YYYY-Www" key per ISO-8601.
+  const d = new Date(`${date}T00:00:00Z`);
+  const day = d.getUTCDay() || 7; // Sunday=7
+  d.setUTCDate(d.getUTCDate() + 4 - day); // Thursday of this ISO week
+  const year = d.getUTCFullYear();
+  const yearStart = new Date(Date.UTC(year, 0, 1));
+  const week = Math.ceil(((d.getTime() - yearStart.getTime()) / DAY_MS + 1) / 7);
+  return `${year}-W${String(week).padStart(2, "0")}`;
+}
+
+function periodKey(date: string, period: DigestPeriod): string {
+  if (period === "day") return date;
+  if (period === "month") return date.slice(0, 7); // YYYY-MM
+  return isoWeekKey(date);
+}
+
+function bucketByPeriod(records: DailyDigestRecord[], period: DigestPeriod): DailyDigestRecord[] {
+  if (period === "day") return records;
+  const sorted = [...records].sort((a, b) => Date.parse(a.date) - Date.parse(b.date));
+  const buckets = new Map<string, DailyDigestRecord>();
+  for (const record of sorted) {
+    // Keep the latest record of each bucket; its date is the end of the period.
+    buckets.set(periodKey(record.date, period), record);
+  }
+  return [...buckets.values()];
+}
+
+export function buildPeriodDigestEntries(records: DailyDigestRecord[], period: DigestPeriod): DailyDigestEntry[] {
+  const bucketed = bucketByPeriod(records, period);
+  const entries = buildDailyDigestEntries(bucketed);
+  if (period === "day") return entries;
+  // AI narratives are bound to a specific day, so strip them on aggregated views.
+  return entries.map((entry) => ({ ...entry, ai: null }));
+}
+
 export function buildDailyDigestEntries(records: DailyDigestRecord[]): DailyDigestEntry[] {
   const sorted = [...records].sort((a, b) => Date.parse(b.date) - Date.parse(a.date));
 

@@ -334,9 +334,12 @@ export interface DailyDigestEntry {
   } | null;
 }
 
+export type DigestPeriod = "day" | "week" | "month";
+
 export interface DailyDigestsData {
   ok: true;
   generatedAt: string;
+  period?: DigestPeriod;
   digests: DailyDigestEntry[];
 }
 

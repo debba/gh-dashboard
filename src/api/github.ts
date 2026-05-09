@@ -179,8 +179,10 @@ export function fetchRepoInsights(fresh = false, signal?: AbortSignal): Promise<
   return readJson(`/api/repo-insights${fresh ? "?fresh=1" : ""}`, withSignal(signal), "/api/repo-insights");
 }
 
-export function fetchDailyDigests(signal?: AbortSignal): Promise<DailyDigestsData> {
-  return readJson("/api/daily-digests", withSignal(signal), "/api/daily-digests");
+export function fetchDailyDigests(signal?: AbortSignal, period: "day" | "week" | "month" = "day"): Promise<DailyDigestsData> {
+  const query = period === "day" ? "" : `?period=${period}`;
+  const cacheKey = `/api/daily-digests${query}`;
+  return readJson(`/api/daily-digests${query}`, withSignal(signal), cacheKey);
 }
 
 export function fetchCIHealth(fresh = false, signal?: AbortSignal): Promise<CIHealthData> {

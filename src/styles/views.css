@@ -554,6 +554,40 @@
   }
   .insight-section p + p { margin-top: 6px; }
 
+  .digest-wrapper { display: flex; flex-direction: column; gap: 12px; }
+  .digest-period-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .digest-period-tabs {
+    display: inline-flex;
+    background: var(--panel);
+    border: 1px solid var(--border-soft);
+    border-radius: 8px;
+    padding: 3px;
+  }
+  .digest-period-tab {
+    background: transparent;
+    border: none;
+    color: var(--muted);
+    padding: 6px 14px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: background 0.15s, color 0.15s;
+  }
+  .digest-period-tab:hover { color: var(--text); }
+  .digest-period-tab.active {
+    background: var(--panel-3);
+    color: var(--text);
+  }
+  .digest-period-hint {
+    font-size: 12px;
+    color: var(--muted);
+  }
   .digest-list { display: grid; gap: 12px; }
   .digest-card {
     background: var(--panel); border: 1px solid var(--border-soft); border-radius: 9px;

@@ -39,6 +39,7 @@ import type {
   CIHealthData,
   DailyDigestEntry,
   DailyDigestsData,
+  DigestPeriod,
   GhIssue,
   GhNotification,
   GhPullRequest,
@@ -184,6 +185,7 @@ export function App() {
   const [owners, setOwners] = useState<string[]>([]);
   const [repoInsights, setRepoInsights] = useState<RepoInsight[]>([]);
   const [dailyDigests, setDailyDigests] = useState<DailyDigestEntry[]>([]);
+  const [digestPeriod, setDigestPeriod] = useState<DigestPeriod>(() => (localStorage.getItem("gh-dash.digestPeriod") as DigestPeriod) || "day");
   const [ciHealth, setCiHealth] = useState<RepoCIHealth[]>([]);
   const [fetchedAt, setFetchedAt] = useState("");
   const [loading, setLoading] = useState(false);
@@ -369,10 +371,11 @@ export function App() {
   useEffect(() => {
     if (authState !== "authenticated") return;
     if (tab !== "digests") return;
-    const cached = peek<DailyDigestsData>(CACHE_KEY.digests);
+    const cacheKey = digestPeriod === "day" ? CACHE_KEY.digests : `${CACHE_KEY.digests}?period=${digestPeriod}`;
+    const cached = peek<DailyDigestsData>(cacheKey);
     if (cached) setDailyDigests(cached.digests);
     const controller = new AbortController();
-    swr<DailyDigestsData>(CACHE_KEY.digests, (signal) => fetchDailyDigests(signal), {
+    swr<DailyDigestsData>(cacheKey, (signal) => fetchDailyDigests(signal, digestPeriod), {
       signal: controller.signal,
     }).promise
       .then((data) => {
@@ -380,7 +383,11 @@ export function App() {
       })
       .catch(() => {});
     return () => controller.abort();
-  }, [tab, authState]);
+  }, [tab, authState, digestPeriod]);
+
+  useEffect(() => {
+    localStorage.setItem("gh-dash.digestPeriod", digestPeriod);
+  }, [digestPeriod]);
 
   async function handleLogout() {
     abortRef.current?.abort();
@@ -640,7 +647,7 @@ export function App() {
     { key: "prs" as const, label: "Pull Requests", count: pullRequests.length, icon: <PulseIcon /> },
     { key: "insights" as const, label: "Insights", count: filteredInsights.length, icon: <PulseIcon /> },
     { key: "ci" as const, label: "CI", count: ciHealth.length, icon: <PulseIcon /> },
-    { key: "digests" as const, label: "Daily", count: dailyDigests.length, icon: <PulseIcon /> },
+    { key: "digests" as const, label: "Digest", count: dailyDigests.length, icon: <PulseIcon /> },
     { key: "kanban" as const, label: "Board", count: "—", icon: <BoardIcon /> },
   ];
 
@@ -859,12 +866,12 @@ export function App() {
           {tab === "digests" ? (
             <div className="view-digests" style={{ display: "block" }}>
               <section className="stats">
-                <div className="stat"><div className="k">Digest days</div><div className="v">{formatNumber(dailyDigests.length)}</div><div className="sub">days with saved snapshots</div></div>
-                <div className="stat"><div className="k">Latest issue delta</div><div className="v">{dailyDigests[0] ? `${dailyDigests[0].issueDelta >= 0 ? "+" : ""}${formatNumber(dailyDigests[0].issueDelta)}` : "0"}</div><div className="sub">vs previous day</div></div>
-                <div className="stat"><div className="k">Latest stars delta</div><div className="v">{dailyDigests[0] ? `${dailyDigests[0].starsDelta >= 0 ? "+" : ""}${formatNumber(dailyDigests[0].starsDelta)}` : "0"}</div><div className="sub">vs previous day</div></div>
-                <div className="stat"><div className="k">Latest stale delta</div><div className="v">{dailyDigests[0] ? `${dailyDigests[0].staleIssueDelta >= 0 ? "+" : ""}${formatNumber(dailyDigests[0].staleIssueDelta)}` : "0"}</div><div className="sub">vs previous day</div></div>
+                <div className="stat"><div className="k">{digestPeriod === "day" ? "Digest days" : digestPeriod === "week" ? "Digest weeks" : "Digest months"}</div><div className="v">{formatNumber(dailyDigests.length)}</div><div className="sub">{digestPeriod === "day" ? "days with saved snapshots" : "periods aggregated"}</div></div>
+                <div className="stat"><div className="k">Latest issue delta</div><div className="v">{dailyDigests[0] ? `${dailyDigests[0].issueDelta >= 0 ? "+" : ""}${formatNumber(dailyDigests[0].issueDelta)}` : "0"}</div><div className="sub">vs previous {digestPeriod === "day" ? "day" : digestPeriod}</div></div>
+                <div className="stat"><div className="k">Latest stars delta</div><div className="v">{dailyDigests[0] ? `${dailyDigests[0].starsDelta >= 0 ? "+" : ""}${formatNumber(dailyDigests[0].starsDelta)}` : "0"}</div><div className="sub">vs previous {digestPeriod === "day" ? "day" : digestPeriod}</div></div>
+                <div className="stat"><div className="k">Latest stale delta</div><div className="v">{dailyDigests[0] ? `${dailyDigests[0].staleIssueDelta >= 0 ? "+" : ""}${formatNumber(dailyDigests[0].staleIssueDelta)}` : "0"}</div><div className="sub">vs previous {digestPeriod === "day" ? "day" : digestPeriod}</div></div>
               </section>
-              <DailyDigestView digests={dailyDigests} />
+              <DailyDigestView digests={dailyDigests} period={digestPeriod} onPeriodChange={setDigestPeriod} />
             </div>
           ) : null}
 

@@ -40,7 +40,7 @@ const TAB_DEFS: { key: PaletteTab; label: string }[] = [
   { key: "prs", label: "Pull Requests" },
   { key: "insights", label: "Insights" },
   { key: "ci", label: "CI" },
-  { key: "digests", label: "Daily" },
+  { key: "digests", label: "Digest" },
   { key: "kanban", label: "Board" },
 ];
 

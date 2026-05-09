@@ -1,7 +1,7 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import type { IncomingMessage, ServerResponse } from "node:http";
 import type { DailyRepoDigest, GhIssue, GhRepo } from "../types/github";
-import { buildDailyDigestEntries, buildDailyDigestRecord, type DailyDigestRecord } from "../utils/digests";
+import { buildDailyDigestEntries, buildDailyDigestRecord, buildPeriodDigestEntries, type DailyDigestRecord, type DigestPeriod } from "../utils/digests";
 import { DATA_DIR, DIGESTS_PATH } from "./config";
 import { sendJsonCacheable } from "./http";
 import { maybeGenerateOpenAIDigest } from "./openaiDigest";
@@ -46,6 +46,11 @@ export async function recordDailyDigest(repos: GhRepo[], issues: GhIssue[]): Pro
   await saveDigests();
 }
 
+function parsePeriod(value: string | null): DigestPeriod {
+  if (value === "week" || value === "month") return value;
+  return "day";
+}
+
 export async function handleDailyDigests(req: IncomingMessage, res: ServerResponse): Promise<void> {
   const records = await loadDigests();
   const latest = records[records.length - 1];
@@ -57,9 +62,12 @@ export async function handleDailyDigests(req: IncomingMessage, res: ServerRespon
       // AI enrichment is optional and should never break digest delivery.
     }
   }
-  const digests = buildDailyDigestEntries(records);
+  const url = new URL(req.url ?? "/", "http://localhost");
+  const period = parsePeriod(url.searchParams.get("period"));
+  const digests = buildPeriodDigestEntries(records, period);
   sendJsonCacheable(req, res, 200, {
     ok: true,
+    period,
     generatedAt: digests[0]?.date ?? "",
     digests,
   });
