@@ -8,6 +8,7 @@ export type PaletteTab =
   | "prs"
   | "kanban"
   | "insights"
+  | "ci"
   | "digests";
 
 interface CommandPaletteProps {
@@ -38,6 +39,7 @@ const TAB_DEFS: { key: PaletteTab; label: string }[] = [
   { key: "issues", label: "Issues" },
   { key: "prs", label: "Pull Requests" },
   { key: "insights", label: "Insights" },
+  { key: "ci", label: "CI" },
   { key: "digests", label: "Daily" },
   { key: "kanban", label: "Board" },
 ];

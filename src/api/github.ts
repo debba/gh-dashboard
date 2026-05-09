@@ -1,6 +1,7 @@
 import { getEtag, peek, setEtag } from "./cache";
 import type {
   ApiError,
+  CIHealthData,
   DailyDigestsData,
   DependentItem,
   ForkNode,
@@ -180,6 +181,10 @@ export function fetchRepoInsights(fresh = false, signal?: AbortSignal): Promise<
 
 export function fetchDailyDigests(signal?: AbortSignal): Promise<DailyDigestsData> {
   return readJson("/api/daily-digests", withSignal(signal), "/api/daily-digests");
+}
+
+export function fetchCIHealth(fresh = false, signal?: AbortSignal): Promise<CIHealthData> {
+  return readJson<CIHealthData>(`/api/ci-health${fresh ? "?fresh=1" : ""}`, withSignal(signal), "/api/ci-health");
 }
 
 export function fetchNotifications(fresh = false, signal?: AbortSignal): Promise<NotificationsData> {

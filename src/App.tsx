@@ -3,6 +3,7 @@ import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import {
   AuthRequiredClientError,
   fetchAuthStatus,
+  fetchCIHealth,
   fetchDailyDigests,
   fetchIssues,
   fetchNotifications,
@@ -33,7 +34,9 @@ import { InboxView } from "./components/views/InboxView";
 import { InsightsView } from "./components/views/InsightsView";
 import { RepoGrid } from "./components/views/RepoGrid";
 import { KanbanView } from "./components/views/KanbanView";
+import { CIHealthView } from "./components/views/CIHealthView";
 import type {
+  CIHealthData,
   DailyDigestEntry,
   DailyDigestsData,
   GhIssue,
@@ -42,6 +45,7 @@ import type {
   GhRepo,
   IssuesData,
   PullRequestsData,
+  RepoCIHealth,
   RepoInsight,
   RepoInsightsData,
   ReposData,
@@ -66,7 +70,7 @@ import { formatNumber } from "./utils/format";
 import { clearStatsCache, readStatsCache, writeStatsCache } from "./utils/statsCache";
 import { clearFiltersCache, hydrateFilters, readFiltersCache, writeFiltersCache } from "./utils/filtersCache";
 
-type Tab = "inbox" | "repos" | "issues" | "prs" | "kanban" | "insights" | "digests";
+type Tab = "inbox" | "repos" | "issues" | "prs" | "kanban" | "insights" | "ci" | "digests";
 type Theme = "dark" | "light" | "auto";
 
 const TAB_ROUTES: Record<Tab, string> = {
@@ -76,6 +80,7 @@ const TAB_ROUTES: Record<Tab, string> = {
   prs: "/pull-requests",
   kanban: "/board",
   insights: "/insights",
+  ci: "/ci",
   digests: "/daily",
 };
 
@@ -103,6 +108,7 @@ const CACHE_KEY = {
   prs: "/api/prs",
   insights: "/api/repo-insights",
   digests: "/api/daily-digests",
+  ciHealth: "/api/ci-health",
 } as const;
 
 const defaultIssueFilters = (): IssueFilters => ({
@@ -178,6 +184,7 @@ export function App() {
   const [owners, setOwners] = useState<string[]>([]);
   const [repoInsights, setRepoInsights] = useState<RepoInsight[]>([]);
   const [dailyDigests, setDailyDigests] = useState<DailyDigestEntry[]>([]);
+  const [ciHealth, setCiHealth] = useState<RepoCIHealth[]>([]);
   const [fetchedAt, setFetchedAt] = useState("");
   const [loading, setLoading] = useState(false);
   const [dataStale, setDataStale] = useState(false);
@@ -345,6 +352,22 @@ export function App() {
 
   useEffect(() => {
     if (authState !== "authenticated") return;
+    if (tab !== "ci") return;
+    const cached = peek<CIHealthData>(CACHE_KEY.ciHealth);
+    if (cached) setCiHealth(cached.repos);
+    const controller = new AbortController();
+    swr<CIHealthData>(CACHE_KEY.ciHealth, (signal) => fetchCIHealth(false, signal), {
+      signal: controller.signal,
+    }).promise
+      .then((data) => {
+        if (!controller.signal.aborted) setCiHealth(data.repos);
+      })
+      .catch(() => {});
+    return () => controller.abort();
+  }, [tab, authState]);
+
+  useEffect(() => {
+    if (authState !== "authenticated") return;
     if (tab !== "digests") return;
     const cached = peek<DailyDigestsData>(CACHE_KEY.digests);
     if (cached) setDailyDigests(cached.digests);
@@ -377,6 +400,7 @@ export function App() {
     setOwners([]);
     setRepoInsights([]);
     setDailyDigests([]);
+    setCiHealth([]);
     setFetchedAt("");
   }
 
@@ -392,6 +416,7 @@ export function App() {
     document.body.classList.toggle("tab-repos", tab === "repos");
     document.body.classList.toggle("tab-kanban", tab === "kanban");
     document.body.classList.toggle("tab-insights", tab === "insights");
+    document.body.classList.toggle("tab-ci", tab === "ci");
     document.body.classList.toggle("tab-digests", tab === "digests");
     document.body.classList.toggle("filters-open", filtersOpen);
   }, [tab, filtersOpen]);
@@ -614,6 +639,7 @@ export function App() {
     { key: "issues" as const, label: "Issues", count: issues.length, icon: <IssueIcon /> },
     { key: "prs" as const, label: "Pull Requests", count: pullRequests.length, icon: <PulseIcon /> },
     { key: "insights" as const, label: "Insights", count: filteredInsights.length, icon: <PulseIcon /> },
+    { key: "ci" as const, label: "CI", count: ciHealth.length, icon: <PulseIcon /> },
     { key: "digests" as const, label: "Daily", count: dailyDigests.length, icon: <PulseIcon /> },
     { key: "kanban" as const, label: "Board", count: "—", icon: <BoardIcon /> },
   ];
@@ -806,6 +832,28 @@ export function App() {
               </section>
               <InsightsView insights={filteredInsights} reposByName={reposByName} onRepoClick={openRepoModal} />
             </div>
+          ) : null}
+
+          {tab === "ci" ? (
+            (() => {
+              const totalRuns = ciHealth.reduce((sum, entry) => sum + entry.totalRuns, 0);
+              const totalFailures = ciHealth.reduce((sum, entry) => sum + entry.failureCount, 0);
+              const failingRepos = ciHealth.filter((entry) => entry.failureCount > 0).length;
+              const decided = ciHealth.reduce((sum, entry) => sum + entry.successCount + entry.failureCount, 0);
+              const successes = ciHealth.reduce((sum, entry) => sum + entry.successCount, 0);
+              const avgSuccessPct = decided ? Math.round((successes / decided) * 100) : 0;
+              return (
+                <div className="view-ci" style={{ display: "block" }}>
+                  <section className="stats">
+                    <div className="stat"><div className="k">Repos with CI</div><div className="v">{formatNumber(ciHealth.length)}</div><div className="sub">recent workflow runs</div></div>
+                    <div className="stat"><div className="k">Total runs</div><div className="v">{formatNumber(totalRuns)}</div><div className="sub">last {ciHealth[0]?.totalRuns ?? 30} per repo</div></div>
+                    <div className="stat"><div className="k">Avg success</div><div className="v">{avgSuccessPct}%</div><div className="sub">across decided runs</div></div>
+                    <div className="stat"><div className="k">Failing repos</div><div className="v">{formatNumber(failingRepos)}</div><div className="sub">{formatNumber(totalFailures)} failures total</div></div>
+                  </section>
+                  <CIHealthView data={ciHealth} reposByName={reposByName} onRepoClick={openRepoModal} />
+                </div>
+              );
+            })()
           ) : null}
 
           {tab === "digests" ? (

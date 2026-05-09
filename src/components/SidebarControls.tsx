@@ -5,7 +5,7 @@ import { INBOX_MAILBOXES, type InboxMailbox } from "../utils/inbox";
 import { formatNumber } from "../utils/format";
 import { ChevronIcon, CloseIcon, SearchIcon } from "./common/Icons";
 
-type Tab = "inbox" | "issues" | "repos" | "kanban" | "insights" | "digests" | "prs";
+type Tab = "inbox" | "issues" | "repos" | "kanban" | "insights" | "ci" | "digests" | "prs";
 
 export interface InboxSidebarState {
   mailbox: InboxMailbox;

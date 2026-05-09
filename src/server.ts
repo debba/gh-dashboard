@@ -35,6 +35,7 @@ import {
   markThreadRead,
 } from "./server/notifications";
 import { handleRepoInsights } from "./server/repoInsights";
+import { getCIHealthCached, invalidateCIHealthCache } from "./server/ciHealth";
 
 const STARGAZERS_QUERY = `
 query($owner:String!, $name:String!, $cursor:String, $direction:OrderDirection!) {
@@ -833,6 +834,7 @@ async function handleAuthLogout(req: IncomingMessage, res: ServerResponse): Prom
   await logout();
   invalidateDataCache();
   invalidateNotificationsCache();
+  invalidateCIHealthCache();
   sendJson(res, 200, { ok: true });
 }
 
@@ -917,6 +919,7 @@ const APP_ROUTES = new Set([
   "/issues",
   "/pull-requests",
   "/insights",
+  "/ci",
   "/daily",
   "/board",
 ]);
@@ -968,6 +971,14 @@ async function handle(req: IncomingMessage, res: ServerResponse): Promise<void> 
   }
   if (url.startsWith("/api/daily-digests")) {
     return handleDailyDigests(req, res);
+  }
+  if (url.startsWith("/api/ci-health")) {
+    const u = new URL(url, "http://localhost");
+    const fresh = u.searchParams.get("fresh") === "1";
+    const payload = await getCIHealthCached(fresh);
+    const status = payload.ok ? 200 : payload.needsAuth ? 401 : 500;
+    sendJsonCacheable(req, res, status, payload);
+    return;
   }
   if (url.startsWith("/api/projects")) {
     return handleProjects(res);

@@ -47,6 +47,41 @@ export interface GhPullRequest {
   headRefName: string;
 }
 
+export interface CIRunSummary {
+  id: number;
+  workflowName: string;
+  status: string;
+  conclusion: string | null;
+  event: string;
+  headBranch: string | null;
+  url: string;
+  createdAt: string;
+  updatedAt: string;
+  durationSec: number | null;
+}
+
+export interface RepoCIHealth {
+  repo: string;
+  url: string;
+  totalRuns: number;
+  successCount: number;
+  failureCount: number;
+  cancelledCount: number;
+  skippedCount: number;
+  inProgressCount: number;
+  successRate: number;
+  avgDurationSec: number | null;
+  lastRun: CIRunSummary | null;
+  lastFailure: CIRunSummary | null;
+  lastSuccess: CIRunSummary | null;
+}
+
+export interface CIHealthData {
+  ok: true;
+  repos: RepoCIHealth[];
+  fetchedAt: string;
+}
+
 export interface SnapshotEntry {
   date: string;
   stars: number;
