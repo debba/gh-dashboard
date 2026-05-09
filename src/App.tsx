@@ -20,6 +20,7 @@ import { RepositoryMetricModal, type MetricKind } from "./components/modals/Repo
 import { ContributorsModal } from "./components/modals/ContributorsModal";
 import { ChangelogModal } from "./components/modals/ChangelogModal";
 import { WelcomeModal } from "./components/modals/WelcomeModal";
+import { CommandPalette } from "./components/modals/CommandPalette";
 import { Footer } from "./components/Footer";
 import { TopBar } from "./components/TopBar";
 import { SidebarControls, type InboxSidebarState } from "./components/SidebarControls";
@@ -185,6 +186,7 @@ export function App() {
   const [contributorsOpen, setContributorsOpen] = useState(false);
   const [changelogOpen, setChangelogOpen] = useState(false);
   const [welcomeOpen, setWelcomeOpen] = useState(() => !localStorage.getItem("gh-dash.welcomeSeen"));
+  const [paletteOpen, setPaletteOpen] = useState(false);
   const [notifications, setNotifications] = useState<GhNotification[]>([]);
   const [pollInterval, setPollInterval] = useState(60);
   const [mailbox, setMailbox] = useState<InboxMailbox>("inbox");
@@ -403,6 +405,17 @@ export function App() {
 
   useEffect(() => setFiltersOpen(false), [location.pathname]);
 
+  useEffect(() => {
+    function handler(event: KeyboardEvent) {
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
+        event.preventDefault();
+        setPaletteOpen((open) => !open);
+      }
+    }
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, []);
+
   useEffect(() => localStorage.setItem("gh-dash.issuesPageSize", String(issuePageSize)), [issuePageSize]);
   useEffect(() => localStorage.setItem("gh-dash.prsPageSize", String(prPageSize)), [prPageSize]);
   useEffect(() => localStorage.setItem("gh-dash.reposPageSize", String(repoPageSize)), [repoPageSize]);
@@ -570,6 +583,10 @@ export function App() {
     navigate(TAB_ROUTES[nextTab]);
   }
 
+  function cycleTheme() {
+    setTheme(theme === "dark" ? "light" : theme === "light" ? "auto" : "dark");
+  }
+
   function openRepoModal(repo: GhRepo, detail: DetailTab = "overview") {
     setSearchParams({ repo: repo.nameWithOwner, detail });
   }
@@ -611,9 +628,10 @@ export function App() {
         themeIcon={themeIcon(theme)}
         authLogin={authLogin}
         owners={owners}
-        onThemeToggle={() => setTheme(theme === "dark" ? "light" : theme === "light" ? "auto" : "dark")}
+        onThemeToggle={cycleTheme}
         onRefresh={() => loadData(true)}
         onOpenFilters={() => setFiltersOpen(true)}
+        onOpenPalette={() => setPaletteOpen(true)}
         onLogout={() => void handleLogout()}
         canLogout={authMode === "device"}
       />
@@ -809,6 +827,18 @@ export function App() {
         onContributorsClick={() => setContributorsOpen(true)}
         onChangelogClick={() => setChangelogOpen(true)}
       />
+      {paletteOpen ? (
+        <CommandPalette
+          repos={repos}
+          issues={issues}
+          pullRequests={pullRequests}
+          onNavigateTab={(next) => navigateTab(next)}
+          onOpenRepo={(repo) => openRepoModal(repo)}
+          onRefresh={() => loadData(true)}
+          onToggleTheme={cycleTheme}
+          onClose={() => setPaletteOpen(false)}
+        />
+      ) : null}
       {welcomeOpen ? (
         <WelcomeModal
           onClose={() => {

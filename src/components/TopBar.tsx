@@ -12,6 +12,7 @@ interface TopBarProps {
   onThemeToggle: () => void;
   onRefresh: () => void;
   onOpenFilters: () => void;
+  onOpenPalette: () => void;
   onLogout: () => void;
   canLogout?: boolean;
 }
@@ -27,6 +28,7 @@ export function TopBar({
   onThemeToggle,
   onRefresh,
   onOpenFilters,
+  onOpenPalette,
   onLogout,
   canLogout = true,
 }: TopBarProps) {
@@ -55,6 +57,11 @@ export function TopBar({
       <div className="spacer" />
       <div className="topbar-actions">
         <span className="meta">{lastUpdated}</span>
+        <button className="btn search-btn" aria-label="Search (Cmd+K)" title="Search (Cmd+K)" onClick={onOpenPalette}>
+          <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="7" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></svg>
+          <span className="label">Search</span>
+          <kbd className="kbd kbd--sm">⌘K</kbd>
+        </button>
         <button className="btn theme-btn" aria-label="Toggle theme" title="Toggle theme" onClick={onThemeToggle}>
           {themeIcon}
           <span className="label">{themeLabel}</span>

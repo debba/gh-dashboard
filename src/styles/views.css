@@ -136,7 +136,9 @@
     border: 1px solid rgba(255,255,255,0.08);
   }
   .btn.theme-btn > .label,
-  .btn.primary > .label { border-color: transparent; }
+  .btn.primary > .label,
+  .btn.search-btn > .label { border-color: transparent; }
+  .btn.search-btn { gap: 8px; }
   .label .dot { width: 7px; height: 7px; border-radius: 50%; }
 
   .meta-row { display: flex; align-items: center; gap: 10px; margin-top: 8px; color: var(--muted); font-size: 12px; flex-wrap: wrap; }
