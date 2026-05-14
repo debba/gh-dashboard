@@ -1,5 +1,6 @@
 import { CloseIcon } from "../common/Icons";
 import { APP_VERSION } from "../../version";
+import { useI18n } from "../../i18n/I18nProvider";
 
 interface WelcomeModalProps {
   onClose: () => void;
@@ -7,6 +8,7 @@ interface WelcomeModalProps {
 }
 
 export function WelcomeModal({ onClose, onViewChangelog }: WelcomeModalProps) {
+  const { t } = useI18n();
   return (
     <div className="modal-root">
       <div className="modal-backdrop" onClick={onClose} />
@@ -15,27 +17,27 @@ export function WelcomeModal({ onClose, onViewChangelog }: WelcomeModalProps) {
           <div className="modal-title">
             <span className="modal-icon welcome">✦</span>
             <div style={{ minWidth: 0 }}>
-              <div className="kind">Welcome</div>
+              <div className="kind">{t("welcome.kind")}</div>
               <h3>gh-dashboard</h3>
             </div>
           </div>
-          <button className="modal-close" aria-label="Close" onClick={onClose}><CloseIcon /></button>
+          <button className="modal-close" aria-label={t("common.close")} onClick={onClose}><CloseIcon /></button>
         </header>
         <div className="modal-body welcome-body">
           <p className="welcome-lead">
-            Explore your GitHub repositories, issues, pull requests, traffic and CI activity from a single dashboard.
+            {t("welcome.lead")}
           </p>
           <ul className="welcome-list">
-            <li><strong>Repositories</strong> — health, stars, forks, traffic, releases at a glance.</li>
-            <li><strong>Inbox & Triage</strong> — cross-repo issues and pull requests with smart filters.</li>
-            <li><strong>Insights & Daily digest</strong> — alerts, opportunities, and AI-generated summaries.</li>
-            <li><strong>Local-first</strong> — your GitHub token stays on your machine, never in the browser.</li>
+            <li><strong>{t("welcome.repositoriesTitle")}</strong> - {t("welcome.repositoriesText")}</li>
+            <li><strong>{t("welcome.inboxTitle")}</strong> - {t("welcome.inboxText")}</li>
+            <li><strong>{t("welcome.insightsTitle")}</strong> - {t("welcome.insightsText")}</li>
+            <li><strong>{t("welcome.localTitle")}</strong> - {t("welcome.localText")}</li>
           </ul>
-          <div className="welcome-meta">Currently running v{APP_VERSION}</div>
+          <div className="welcome-meta">{t("welcome.version", { version: APP_VERSION })}</div>
         </div>
         <footer className="welcome-foot">
-          <button type="button" className="btn ghost" onClick={onViewChangelog}>What's new</button>
-          <button type="button" className="btn primary" onClick={onClose}>Get started</button>
+          <button type="button" className="btn ghost" onClick={onViewChangelog}>{t("welcome.whatsNew")}</button>
+          <button type="button" className="btn primary" onClick={onClose}>{t("welcome.getStarted")}</button>
         </footer>
       </div>
     </div>

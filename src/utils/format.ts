@@ -1,17 +1,79 @@
-export function formatRelativeTime(iso: string, now = Date.now()): string {
+import type { Language } from "./i18n";
+
+const RELATIVE_TIME_LABELS: Record<Language, {
+  now: string;
+  minute: (value: number) => string;
+  hour: (value: number) => string;
+  day: (value: number) => string;
+  month: (value: number) => string;
+  year: (value: number) => string;
+}> = {
+  en: {
+    now: "just now",
+    minute: (value) => `${value}m ago`,
+    hour: (value) => `${value}h ago`,
+    day: (value) => `${value}d ago`,
+    month: (value) => `${value}mo ago`,
+    year: (value) => `${value}y ago`,
+  },
+  it: {
+    now: "ora",
+    minute: (value) => `${value} min fa`,
+    hour: (value) => `${value} h fa`,
+    day: (value) => `${value} g fa`,
+    month: (value) => `${value} mesi fa`,
+    year: (value) => `${value} anni fa`,
+  },
+  fr: {
+    now: "à l'instant",
+    minute: (value) => `il y a ${value} min`,
+    hour: (value) => `il y a ${value} h`,
+    day: (value) => `il y a ${value} j`,
+    month: (value) => `il y a ${value} mois`,
+    year: (value) => `il y a ${value} ans`,
+  },
+  es: {
+    now: "ahora",
+    minute: (value) => `hace ${value} min`,
+    hour: (value) => `hace ${value} h`,
+    day: (value) => `hace ${value} d`,
+    month: (value) => `hace ${value} meses`,
+    year: (value) => `hace ${value} años`,
+  },
+  de: {
+    now: "gerade eben",
+    minute: (value) => `vor ${value} Min.`,
+    hour: (value) => `vor ${value} Std.`,
+    day: (value) => `vor ${value} T`,
+    month: (value) => `vor ${value} Mon.`,
+    year: (value) => `vor ${value} J`,
+  },
+  zh: {
+    now: "刚刚",
+    minute: (value) => `${value} 分钟前`,
+    hour: (value) => `${value} 小时前`,
+    day: (value) => `${value} 天前`,
+    month: (value) => `${value} 个月前`,
+    year: (value) => `${value} 年前`,
+  },
+};
+
+export function formatRelativeTime(iso: string, now = Date.now(), language: Language = "en"): string {
   if (!iso) return "";
   const date = new Date(iso);
   const diff = now - date.getTime();
   const minutes = Math.floor(diff / 60_000);
-  if (minutes < 1) return "just now";
-  if (minutes < 60) return `${minutes}m ago`;
+  const labels = RELATIVE_TIME_LABELS[language];
+  if (minutes < 1) return labels.now;
+  if (minutes < 60) return labels.minute(minutes);
   const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours}h ago`;
+  if (hours < 24) return labels.hour(hours);
   const days = Math.floor(hours / 24);
-  if (days < 30) return `${days}d ago`;
+  if (days < 30) return labels.day(days);
   const months = Math.floor(days / 30);
-  if (months < 12) return `${months}mo ago`;
-  return `${Math.floor(months / 12)}y ago`;
+  if (months < 12) return labels.month(months);
+  const years = Math.floor(months / 12);
+  return labels.year(years);
 }
 
 export function formatNumber(value: number): string {

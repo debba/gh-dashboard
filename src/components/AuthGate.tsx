@@ -7,6 +7,7 @@ import {
   type DeviceFlowStart,
 } from "../api/github";
 import appLogo from "../assets/app-logo-mark.svg";
+import { useI18n } from "../i18n/I18nProvider";
 
 interface AuthGateProps {
   onAuthenticated: (login: string) => void;
@@ -15,6 +16,7 @@ interface AuthGateProps {
 type Phase = "idle" | "starting" | "awaiting" | "verifying" | "success" | "error";
 
 export function AuthGate({ onAuthenticated }: AuthGateProps) {
+  const { t } = useI18n();
   const [status, setStatus] = useState<AuthStatus | null>(null);
   const [flow, setFlow] = useState<DeviceFlowStart | null>(null);
   const [phase, setPhase] = useState<Phase>("idle");
@@ -52,13 +54,13 @@ export function AuthGate({ onAuthenticated }: AuthGateProps) {
       if (result.status === "expired") {
         stopPolling();
         setPhase("error");
-        setError("Device code expired. Please start again.");
+        setError(t("auth.expired"));
         return;
       }
       if (result.status === "denied") {
         stopPolling();
         setPhase("error");
-        setError("Access was denied.");
+        setError(t("auth.denied"));
         return;
       }
       if (result.status === "error") {
@@ -110,33 +112,30 @@ export function AuthGate({ onAuthenticated }: AuthGateProps) {
           <span className="auth-logo"><img src={appLogo} alt="" /></span>
           <span>GitHub Dashboard</span>
         </div>
-        <h1>Sign in with GitHub</h1>
+        <h1>{t("auth.signIn")}</h1>
         <p className="auth-sub">
-          This dashboard reads your repositories and issues via the GitHub API. Authorize the app
-          to continue.
+          {t("auth.description")}
         </p>
 
         {externalMode ? (
           <div className="auth-error">
             <strong>
               {mode === "gh-cli"
-                ? "Authentication via gh CLI is not ready."
-                : "GITHUB_TOKEN is not available."}
+                ? t("auth.ghCliNotReady")
+                : t("auth.tokenMissing")}
             </strong>
             <p>
               {mode === "gh-cli" ? (
                 <>
-                  The server is configured with <code>GH_AUTH_MODE=gh-cli</code>. Make sure the{" "}
+                  {t("auth.ghCliHelp")}{" "}
                   <a href="https://cli.github.com/" target="_blank" rel="noreferrer">gh CLI</a>
-                  {" "}is installed and you are signed in:
                   <br />
                   <code>gh auth login</code>
-                  {", "}then reload this page.
+                  {", "}{t("auth.ghCliReload")}
                 </>
               ) : (
                 <>
-                  The server is configured with <code>GH_AUTH_MODE=token</code>. Export a personal
-                  access token as <code>GITHUB_TOKEN</code> and restart the server.
+                  {t("auth.tokenHelp")}
                 </>
               )}
             </p>
@@ -144,32 +143,29 @@ export function AuthGate({ onAuthenticated }: AuthGateProps) {
           </div>
         ) : clientMissing ? (
           <div className="auth-error">
-            <strong>GITHUB_CLIENT_ID is not set.</strong>
+            <strong>{t("auth.clientMissing")}</strong>
             <p>
-              Register an OAuth App at{" "}
+              {t("auth.clientHelp").split("github.com/settings/developers")[0]}
               <a href="https://github.com/settings/developers" target="_blank" rel="noreferrer">
                 github.com/settings/developers
               </a>
-              , enable Device Flow, then export <code>GITHUB_CLIENT_ID</code> and restart the
-              server. Alternatively, set <code>GH_AUTH_MODE=gh-cli</code> to reuse your local
-              {" "}<code>gh</code> CLI session, or <code>GH_AUTH_MODE=token</code> with a
-              {" "}<code>GITHUB_TOKEN</code>.
+              {t("auth.clientHelp").split("github.com/settings/developers")[1]}
             </p>
           </div>
         ) : null}
 
         {!externalMode && (phase === "idle" || phase === "error") ? (
           <button className="auth-primary" onClick={() => void start()} disabled={clientMissing}>
-            Continue with GitHub
+            {t("auth.continue")}
           </button>
         ) : null}
 
-        {phase === "starting" ? <p className="auth-status">Requesting device code…</p> : null}
+        {phase === "starting" ? <p className="auth-status">{t("auth.requestingCode")}</p> : null}
 
         {phase === "awaiting" && flow ? (
           <div className="auth-flow">
             <p className="auth-status">
-              Open the GitHub verification page and enter the code below.
+              {t("auth.openVerification")}
             </p>
             <a className="auth-link" href={flow.verificationUri} target="_blank" rel="noreferrer">
               {flow.verificationUri}
@@ -177,15 +173,15 @@ export function AuthGate({ onAuthenticated }: AuthGateProps) {
             <div className="auth-code-row">
               <code className="auth-code">{flow.userCode}</code>
               <button className="auth-secondary" onClick={() => void copyCode()}>
-                {copied ? "Copied" : "Copy"}
+                {copied ? t("auth.copied") : t("auth.copy")}
               </button>
             </div>
-            <p className="auth-hint">Waiting for authorization…</p>
+            <p className="auth-hint">{t("auth.waiting")}</p>
           </div>
         ) : null}
 
         {phase === "success" ? (
-          <p className="auth-status">Authenticated. Loading dashboard…</p>
+          <p className="auth-status">{t("auth.success")}</p>
         ) : null}
 
         {error ? <p className="auth-error-line">{error}</p> : null}

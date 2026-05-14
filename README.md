@@ -64,6 +64,10 @@ In production both are served by the Node process: Vite builds the SPA into `dis
 | Tests       | Vitest + jsdom                                 |
 | Tooling     | `concurrently`, `tsc`                          |
 
+### Translations
+
+UI translations live in `src/i18n/`, with one dictionary file per language. See [docs/translations.md](docs/translations.md) for the workflow to edit text or add another language.
+
 ## Prerequisites
 
 - **Node.js 20+** (anything that supports native `fetch` and ESM is fine).
@@ -248,6 +252,7 @@ Tests live under `tests/` and mirror the structure of `src/` (see [AGENTS.md](AG
 │   ├── types/github.ts        # Shared TypeScript types
 │   └── utils/                 # Pure logic (covered by unit tests)
 ├── tests/                     # Vitest suites mirroring src/
+├── docs/                      # Contributor documentation
 ├── public/                    # Static assets (demo media)
 ├── vite.config.ts
 ├── tsconfig.json              # Frontend TS config

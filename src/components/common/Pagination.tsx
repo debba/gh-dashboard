@@ -1,4 +1,5 @@
 import { PAGE_SIZES, getPageWindow } from "../../utils/pagination";
+import { useI18n } from "../../i18n/I18nProvider";
 
 interface PaginationProps {
   totalItems: number;
@@ -10,6 +11,7 @@ interface PaginationProps {
 }
 
 export function Pagination({ totalItems, page, pageSize, onPageChange, onPageSizeChange, showPageSize = true }: PaginationProps) {
+  const { t } = useI18n();
   const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
   if (totalItems <= pageSize && pageSize === PAGE_SIZES[2]) return null;
   const from = totalItems ? (page - 1) * pageSize + 1 : 0;
@@ -17,7 +19,7 @@ export function Pagination({ totalItems, page, pageSize, onPageChange, onPageSiz
 
   return (
     <div className="pagination">
-      <span className="info">{from}-{to} of {totalItems}</span>
+      <span className="info">{from}-{to} {t("common.of")} {totalItems}</span>
       <div className="controls">
         <button className="page-btn" disabled={page <= 1} onClick={() => onPageChange(page - 1)}>‹</button>
         {getPageWindow(page, totalPages).map((item, index) => item === "..."
@@ -27,7 +29,7 @@ export function Pagination({ totalItems, page, pageSize, onPageChange, onPageSiz
       </div>
       {showPageSize ? (
         <label className="pagesize">
-          Page size
+          {t("common.pageSize")}
           <select value={pageSize} onChange={(event) => onPageSizeChange(Number(event.target.value))}>
             {PAGE_SIZES.map((size) => <option key={size} value={size}>{size}</option>)}
           </select>
