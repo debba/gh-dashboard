@@ -11,6 +11,24 @@ describe("format utilities", () => {
     expect(formatRelativeTime("2026-04-12T12:00:00.000Z", now)).toBe("10d ago");
   });
 
+  it("formats relative time in Italian", () => {
+    const now = new Date("2026-04-22T12:00:00.000Z").getTime();
+
+    expect(formatRelativeTime("2026-04-22T11:59:45.000Z", now, "it")).toBe("ora");
+    expect(formatRelativeTime("2026-04-22T11:45:00.000Z", now, "it")).toBe("15 min fa");
+    expect(formatRelativeTime("2026-04-22T09:00:00.000Z", now, "it")).toBe("3 h fa");
+    expect(formatRelativeTime("2026-04-12T12:00:00.000Z", now, "it")).toBe("10 g fa");
+  });
+
+  it("formats relative time in additional supported languages", () => {
+    const now = new Date("2026-04-22T12:00:00.000Z").getTime();
+
+    expect(formatRelativeTime("2026-04-22T11:45:00.000Z", now, "fr")).toBe("il y a 15 min");
+    expect(formatRelativeTime("2026-04-22T09:00:00.000Z", now, "es")).toBe("hace 3 h");
+    expect(formatRelativeTime("2026-04-12T12:00:00.000Z", now, "de")).toBe("vor 10 T");
+    expect(formatRelativeTime("2026-04-12T12:00:00.000Z", now, "zh")).toBe("10 天前");
+  });
+
   it("formats compact numbers", () => {
     expect(formatNumber(999)).toBe("999");
     expect(formatNumber(1_200)).toBe("1.2k");

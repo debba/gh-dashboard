@@ -1,0 +1,27 @@
+  :root {
+    --text-size-step: 0px;
+  }
+
+  :root[data-text-size="small"] {
+    --text-size-step: -1px;
+  }
+
+  :root[data-text-size="large"] {
+    --text-size-step: 1px;
+  }
+
+  :root[data-text-size="small"] :where(.topbar, .sidebar, .main, .modal, .auth-card, .app-footer) {
+    font-size: 13px;
+  }
+
+  :root[data-text-size="large"] :where(.topbar, .sidebar, .main, .modal, .auth-card, .app-footer) {
+    font-size: 15px;
+  }
+
+  :root[data-text-size="small"] :where(.btn, .tab, input, select, .toolbar label, .count-chip, .data-row-title, .repo-desc, .rc-stats, .empty, .pagination, .modal-empty, .welcome-list, .digest-card, .insight-card, .ci-table) {
+    font-size: max(10px, calc(1em - 1px));
+  }
+
+  :root[data-text-size="large"] :where(.btn, .tab, input, select, .toolbar label, .count-chip, .data-row-title, .repo-desc, .rc-stats, .empty, .pagination, .modal-empty, .welcome-list, .digest-card, .insight-card, .ci-table) {
+    font-size: calc(1em + 1px);
+  }

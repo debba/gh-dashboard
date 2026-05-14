@@ -4,6 +4,7 @@ import { getLanguageColor } from "../utils/colors";
 import { INBOX_MAILBOXES, type InboxMailbox } from "../utils/inbox";
 import { formatNumber } from "../utils/format";
 import { ChevronIcon, CloseIcon, SearchIcon } from "./common/Icons";
+import { useI18n } from "../i18n/I18nProvider";
 
 type Tab = "inbox" | "issues" | "repos" | "kanban" | "insights" | "ci" | "digests" | "prs";
 
@@ -74,6 +75,7 @@ function CheckList({
   showGhAvatar?: boolean;
   userLogin?: string;
 }) {
+  const { t } = useI18n();
   // Original sort (checked first, then by count, then alphabetical) with one addition:
   // when userLogin is set, the user's personal account always sorts last (orgs first).
   const sorted = [...entries].sort((a, b) => {
@@ -83,7 +85,7 @@ function CheckList({
     }
     return Number(selected.has(b[0])) - Number(selected.has(a[0])) || countOf(b[1]) - countOf(a[1]) || a[0].localeCompare(b[0]);
   });
-  if (!sorted.length) return <div style={{ padding: 8, color: "var(--muted-2)", fontSize: 12 }}>No matches</div>;
+  if (!sorted.length) return <div style={{ padding: 8, color: "var(--muted-2)", fontSize: 12 }}>{t("common.noMatches")}</div>;
 
   return (
     <div className="check-list">
@@ -134,6 +136,7 @@ export function SidebarControls({
   authLogin,
   inbox,
 }: SidebarControlsProps) {
+  const { t } = useI18n();
   const inboxMode = tab === "inbox";
   const prMode = tab === "prs";
   const issueMode = tab === "issues" || tab === "kanban";
@@ -151,14 +154,14 @@ export function SidebarControls({
     return (
       <aside className="sidebar" id="sidebar">
         <div className="side-head">
-          <h2>Mailboxes</h2>
+          <h2>{t("sidebar.mailboxes")}</h2>
           <span className="reset" style={{ pointerEvents: "none" }}>{formatNumber(inbox.totalCount)}</span>
-          <button className="side-close" aria-label="Close filters" onClick={onClose}><CloseIcon /></button>
+          <button className="side-close" aria-label={t("common.closeFilters")} onClick={onClose}><CloseIcon /></button>
         </div>
         <div className="search-wrap">
           <label className="search-input">
             <SearchIcon />
-            <input type="search" placeholder="Search inbox…" autoComplete="off" value={search} onChange={(event) => onSearchChange(event.target.value)} />
+            <input type="search" placeholder={t("sidebar.searchInbox")} autoComplete="off" value={search} onChange={(event) => onSearchChange(event.target.value)} />
           </label>
         </div>
         <div className="mailbox-list">
@@ -172,7 +175,7 @@ export function SidebarControls({
                 type="button"
                 onClick={() => inbox.onMailboxChange(entry.key)}
               >
-                <span>{entry.label}</span>
+                <span>{t(`mailbox.${entry.key}`)}</span>
                 <strong>{formatNumber(count)}</strong>
               </button>
             );
@@ -180,7 +183,7 @@ export function SidebarControls({
         </div>
         {inbox.unreadCount > 0 ? (
           <button className="mailbox-action" type="button" onClick={inbox.onMarkAllRead}>
-            Mark all as read ({formatNumber(inbox.unreadCount)})
+            {t("sidebar.markAllRead", { count: formatNumber(inbox.unreadCount) })}
           </button>
         ) : null}
       </aside>
@@ -190,19 +193,19 @@ export function SidebarControls({
   return (
     <aside className="sidebar" id="sidebar">
       <div className="side-head">
-        <h2>Filters</h2>
-        <button className="reset" onClick={onReset}>Clear all</button>
-        <button className="side-close" aria-label="Close filters" onClick={onClose}><CloseIcon /></button>
+        <h2>{t("common.filters")}</h2>
+        <button className="reset" onClick={onReset}>{t("common.clearAll")}</button>
+        <button className="side-close" aria-label={t("common.closeFilters")} onClick={onClose}><CloseIcon /></button>
       </div>
 
       <div className="search-wrap">
         <label className="search-input">
           <SearchIcon />
-          <input type="search" placeholder="Search…" autoComplete="off" value={search} onChange={(event) => onSearchChange(event.target.value)} />
+          <input type="search" placeholder={t("sidebar.search")} autoComplete="off" value={search} onChange={(event) => onSearchChange(event.target.value)} />
         </label>
       </div>
 
-      <FilterSection title="Organizations" activeCount={orgSelection.size} open>
+      <FilterSection title={t("sidebar.organizations")} activeCount={orgSelection.size} open>
         <CheckList
           entries={[...orgEntries.entries()]}
           selected={orgSelection}
@@ -216,34 +219,34 @@ export function SidebarControls({
 
       {ticketMode ? (
         <>
-          <FilterSection title="Repositories" activeCount={activeFilters.repos.size} dataFor={prMode ? "prs-only" : "issues-only"}>
+          <FilterSection title={t("sidebar.repositories")} activeCount={activeFilters.repos.size} dataFor={prMode ? "prs-only" : "issues-only"}>
             <CheckList entries={[...activeFacets.repos.entries()]} selected={activeFilters.repos} onToggle={(value) => onActiveFiltersChange({ ...activeFilters, repos: toggleSetValue(activeFilters.repos, value) })} />
           </FilterSection>
-          <FilterSection title="Labels" activeCount={activeFilters.labels.size} dataFor={prMode ? "prs-only" : "issues-only"}>
+          <FilterSection title={t("sidebar.labels")} activeCount={activeFilters.labels.size} dataFor={prMode ? "prs-only" : "issues-only"}>
             <CheckList entries={[...activeFacets.labels.entries()]} selected={activeFilters.labels} showSwatch onToggle={(value) => onActiveFiltersChange({ ...activeFilters, labels: toggleSetValue(activeFilters.labels, value) })} />
           </FilterSection>
-          <FilterSection title="Authors" activeCount={activeFilters.authors.size} dataFor={prMode ? "prs-only" : "issues-only"}>
+          <FilterSection title={t("sidebar.authors")} activeCount={activeFilters.authors.size} dataFor={prMode ? "prs-only" : "issues-only"}>
             <CheckList entries={[...activeFacets.authors.entries()]} selected={activeFilters.authors} onToggle={(value) => onActiveFiltersChange({ ...activeFilters, authors: toggleSetValue(activeFilters.authors, value) })} />
           </FilterSection>
-          <FilterSection title="Assignees" activeCount={activeFilters.assignees.size} dataFor={prMode ? "prs-only" : "issues-only"}>
+          <FilterSection title={t("sidebar.assignees")} activeCount={activeFilters.assignees.size} dataFor={prMode ? "prs-only" : "issues-only"}>
             <CheckList entries={[...activeFacets.assignees.entries()]} selected={activeFilters.assignees} onToggle={(value) => onActiveFiltersChange({ ...activeFilters, assignees: toggleSetValue(activeFilters.assignees, value) })} />
           </FilterSection>
         </>
       ) : (
         <>
-          <FilterSection title="Languages" activeCount={repoFilters.languages.size} dataFor="repos-only">
+          <FilterSection title={t("sidebar.languages")} activeCount={repoFilters.languages.size} dataFor="repos-only">
             <CheckList entries={[...repoFacets.languages.entries()]} selected={repoFilters.languages} languageDot onToggle={(value) => onRepoFiltersChange({ ...repoFilters, languages: toggleSetValue(repoFilters.languages, value) })} />
           </FilterSection>
-          <FilterSection title="Visibility" activeCount={repoFilters.visibility === "all" ? 0 : 1} dataFor="repos-only" open>
+          <FilterSection title={t("sidebar.visibility")} activeCount={repoFilters.visibility === "all" ? 0 : 1} dataFor="repos-only" open>
             <div className="opt-group" role="tablist">
               {(["all", "public", "private"] as const).map((value) => (
-                <button key={value} className={repoFilters.visibility === value ? "active" : ""} onClick={() => onRepoFiltersChange({ ...repoFilters, visibility: value })}>{value[0].toUpperCase() + value.slice(1)}</button>
+                <button key={value} className={repoFilters.visibility === value ? "active" : ""} onClick={() => onRepoFiltersChange({ ...repoFilters, visibility: value })}>{value === "all" ? t("common.all") : value === "public" ? t("sidebar.public") : t("sidebar.private")}</button>
               ))}
             </div>
           </FilterSection>
-          <FilterSection title="Options" activeCount={Number(!repoFilters.includeForks) + Number(repoFilters.includeArchived)} dataFor="repos-only" open>
-            <div className="toggle-row">Include forks <button className={`toggle ${repoFilters.includeForks ? "on" : ""}`} role="switch" aria-checked={repoFilters.includeForks} onClick={() => onRepoFiltersChange({ ...repoFilters, includeForks: !repoFilters.includeForks })} /></div>
-            <div className="toggle-row">Include archived <button className={`toggle ${repoFilters.includeArchived ? "on" : ""}`} role="switch" aria-checked={repoFilters.includeArchived} onClick={() => onRepoFiltersChange({ ...repoFilters, includeArchived: !repoFilters.includeArchived })} /></div>
+          <FilterSection title={t("sidebar.options")} activeCount={Number(!repoFilters.includeForks) + Number(repoFilters.includeArchived)} dataFor="repos-only" open>
+            <div className="toggle-row">{t("sidebar.includeForks")} <button className={`toggle ${repoFilters.includeForks ? "on" : ""}`} role="switch" aria-checked={repoFilters.includeForks} onClick={() => onRepoFiltersChange({ ...repoFilters, includeForks: !repoFilters.includeForks })} /></div>
+            <div className="toggle-row">{t("sidebar.includeArchived")} <button className={`toggle ${repoFilters.includeArchived ? "on" : ""}`} role="switch" aria-checked={repoFilters.includeArchived} onClick={() => onRepoFiltersChange({ ...repoFilters, includeArchived: !repoFilters.includeArchived })} /></div>
           </FilterSection>
         </>
       )}

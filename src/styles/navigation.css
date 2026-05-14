@@ -42,9 +42,9 @@
     display: flex;
     align-items: center;
     justify-content: flex-end;
-    gap: 6px;
+    gap: 4px;
     min-width: 0;
-    padding: 4px;
+    padding: 3px;
     background: color-mix(in srgb, var(--panel) 78%, transparent);
     border: 1px solid var(--border-soft);
     border-radius: 10px;
@@ -53,22 +53,137 @@
   .topbar .meta {
     display: inline-flex;
     align-items: center;
-    min-height: 32px;
-    padding: 0 10px;
+    min-height: 30px;
+    padding: 0 8px;
     border-right: 1px solid var(--border-soft);
-    font-size: 12px;
+    font-size: 11.5px;
     color: var(--muted);
     white-space: nowrap;
   }
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+  .preferences-menu {
+    position: relative;
+  }
+  .preferences-btn.active {
+    background: var(--panel-2);
+    border-color: var(--button-hover-border);
+  }
+  .preferences-popover {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    width: min(340px, calc(100vw - 24px));
+    padding: 14px;
+    border: 1px solid var(--border-soft);
+    border-radius: 8px;
+    background: color-mix(in srgb, var(--panel) 96%, black);
+    box-shadow: var(--shadow);
+    z-index: 40;
+  }
+  .preferences-title {
+    margin: 0 0 12px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border-soft);
+    color: var(--muted);
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  .preferences-field {
+    display: grid;
+    grid-template-columns: 1fr;
+    width: 100%;
+    gap: 7px;
+    padding: 10px 0;
+    color: var(--text);
+    font-size: 12.5px;
+  }
+  .preferences-field > span {
+    color: var(--muted);
+    font-size: 11.5px;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+  .preferences-field select {
+    width: 100%;
+    min-height: 34px;
+    border: 1px solid var(--border-soft);
+    border-radius: 7px;
+    background: var(--panel-2);
+    color: var(--text);
+    padding: 6px 9px;
+    font-size: 12.5px;
+    font-weight: 600;
+    outline: none;
+  }
+  .preferences-field select:focus-visible {
+    box-shadow: var(--ring);
+  }
+  .preferences-segmented {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 3px;
+    padding: 3px;
+    border: 1px solid var(--border-soft);
+    border-radius: 8px;
+    background: color-mix(in srgb, var(--panel-2) 78%, transparent);
+  }
+  .preferences-segmented button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    min-height: 30px;
+    padding: 5px 8px;
+    border: 0;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .preferences-option-icon {
+    width: 14px;
+    font-size: 13px;
+    line-height: 1;
+    text-align: center;
+  }
+  .theme-icon-dark { color: #8b93ff; }
+  .theme-icon-light { color: #f59e0b; }
+  .theme-icon-auto { color: #35c4f0; }
+  .text-size-option-small { font-size: 11px !important; }
+  .text-size-option-normal { font-size: 12px !important; }
+  .text-size-option-large { font-size: 14px !important; }
+  .preferences-segmented button:hover {
+    color: var(--text);
+    background: var(--hover-surface);
+  }
+  .preferences-segmented button.active {
+    color: var(--active-text);
+    background: linear-gradient(180deg, var(--active-start), var(--active-end));
+  }
   @media (max-width: 720px) { .topbar .meta { display: none; } }
   .btn {
-    display: inline-flex; align-items: center; gap: 8px;
-    padding: 7px 11px; border-radius: 7px; cursor: pointer;
-    font-size: 13px; font-weight: 600;
+    display: inline-flex; align-items: center; gap: 7px;
+    padding: 6px 9px; border-radius: 7px; cursor: pointer;
+    font-size: 12.5px; font-weight: 600;
     border: 1px solid transparent;
     background: transparent; color: var(--text);
     transition: background .15s ease, border-color .15s ease, transform .15s ease;
-    min-height: 32px;
+    min-height: 30px;
   }
   .btn:hover { background: var(--panel-2); border-color: var(--button-hover-border); transform: translateY(-1px); }
   .btn:focus-visible { outline: none; box-shadow: var(--ring); }
@@ -83,7 +198,11 @@
   .btn .spin { animation: spin 0.8s linear infinite; }
   @keyframes spin { to { transform: rotate(360deg); } }
   .btn .label { display: inline; }
-  .auth-btn .label { max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .auth-btn .label { max-width: 92px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  @media (max-width: 1180px) {
+    .search-btn .kbd { display: none; }
+    .btn { padding-inline: 8px; }
+  }
   @media (max-width: 900px) {
     .topbar { gap: 10px; }
     .btn { width: 34px; padding: 0; justify-content: center; }
@@ -121,6 +240,10 @@
     .brand .sub { max-width: calc(100vw - 20px); }
     .topbar-actions { gap: 4px; }
     .btn { width: 32px; min-height: 32px; }
+    .preferences-popover {
+      right: -4px;
+      width: min(288px, calc(100vw - 16px));
+    }
   }
 
   .filters-toggle { display: none; }

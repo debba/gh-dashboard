@@ -1,5 +1,6 @@
 import type { GhRepo, RepoInsight } from "../../types/github";
 import { formatNumber, formatRelativeTime } from "../../utils/format";
+import { useI18n } from "../../i18n/I18nProvider";
 
 interface InsightsViewProps {
   insights: RepoInsight[];
@@ -8,8 +9,9 @@ interface InsightsViewProps {
 }
 
 export function InsightsView({ insights, reposByName, onRepoClick }: InsightsViewProps) {
+  const { language, t } = useI18n();
   if (!insights.length) {
-    return <div className="empty"><div className="big">No insights available</div><div>Try broadening the repository filters.</div></div>;
+    return <div className="empty"><div className="big">{t("insights.emptyTitle")}</div><div>{t("insights.emptyText")}</div></div>;
   }
 
   return (
@@ -22,32 +24,32 @@ export function InsightsView({ insights, reposByName, onRepoClick }: InsightsVie
             <div className="insight-head">
               <div>
                 <strong>{insight.repo}</strong>
-                <span>{insight.healthScore}/100 health · {insight.healthLabel}</span>
+                <span>{t("insights.health", { score: insight.healthScore, label: insight.healthLabel })}</span>
               </div>
               <div className={`health-pill ${insight.healthLabel}`}>{insight.healthLabel}</div>
             </div>
             <div className="insight-meta">
-              <span>{insight.issueCount} open issues</span>
-              <span>{insight.staleIssueCount} stale</span>
-              <span>{formatNumber(insight.viewsCount)} views</span>
-              <span>{formatNumber(insight.totalDownloads)} downloads</span>
-              <span>pushed {formatRelativeTime(repo.pushedAt)}</span>
+              <span>{t("insights.openIssues", { count: insight.issueCount })}</span>
+              <span>{t("insights.stale", { count: insight.staleIssueCount })}</span>
+              <span>{t("insights.views", { count: formatNumber(insight.viewsCount) })}</span>
+              <span>{t("insights.downloads", { count: formatNumber(insight.totalDownloads) })}</span>
+              <span>{t("repo.pushed", { time: repo.pushedAt ? formatRelativeTime(repo.pushedAt, Date.now(), language) : "-" })}</span>
             </div>
             {insight.alerts.length ? (
               <div className="insight-section">
-                <h4>Alerts</h4>
+                <h4>{t("insights.alerts")}</h4>
                 {insight.alerts.map((item) => <p key={item}>{item}</p>)}
               </div>
             ) : null}
             {insight.opportunities.length ? (
               <div className="insight-section">
-                <h4>Opportunities</h4>
+                <h4>{t("insights.opportunities")}</h4>
                 {insight.opportunities.map((item) => <p key={item}>{item}</p>)}
               </div>
             ) : null}
             {insight.correlations.length ? (
               <div className="insight-section">
-                <h4>Correlation</h4>
+                <h4>{t("insights.correlation")}</h4>
                 {insight.correlations.map((item) => <p key={item}>{item}</p>)}
               </div>
             ) : null}

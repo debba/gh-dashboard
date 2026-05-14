@@ -1,4 +1,5 @@
 import { APP_VERSION } from "../version";
+import { useI18n } from "../i18n/I18nProvider";
 
 interface FooterProps {
   onContributorsClick: () => void;
@@ -6,11 +7,12 @@ interface FooterProps {
 }
 
 export function Footer({ onContributorsClick, onChangelogClick }: FooterProps) {
+  const { t } = useI18n();
   return (
     <footer className="app-footer">
       <div className="app-footer-inner">
         <span className="app-footer-credit">
-          Crafted by{" "}
+          {t("footer.craftedBy")}{" "}
           <a href="https://github.com/debba" target="_blank" rel="noreferrer">debba</a>
           <span className="app-footer-sep">·</span>
           <span className="app-footer-version">v{APP_VERSION}</span>
@@ -26,11 +28,11 @@ export function Footer({ onContributorsClick, onChangelogClick }: FooterProps) {
           </a>
           <button className="app-footer-link" type="button" onClick={onContributorsClick}>
             <UsersIcon />
-            <span>Contributors</span>
+            <span>{t("footer.contributors")}</span>
           </button>
           <button className="app-footer-link" type="button" onClick={onChangelogClick}>
             <ChangelogIcon />
-            <span>Changelog</span>
+            <span>{t("footer.changelog")}</span>
           </button>
         </div>
       </div>
