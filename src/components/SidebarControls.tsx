@@ -106,12 +106,27 @@ function CheckList({
   );
 }
 
-function FilterSection({ title, activeCount, children, dataFor, open = false }: { title: string; activeCount: number; children: ReactNode; dataFor?: string; open?: boolean }) {
+function FilterSection({ title, activeCount, children, dataFor, open = false, onClear }: { title: string; activeCount: number; children: ReactNode; dataFor?: string; open?: boolean; onClear?: () => void }) {
+  const { t } = useI18n();
+  const clearable = activeCount > 0 && Boolean(onClear);
   return (
     <details className="section" data-for={dataFor} open={open || activeCount > 0}>
       <summary>
         <ChevronIcon />
-        {title} <span className={`count ${activeCount ? "active" : ""}`}>{activeCount}</span>
+        {title}
+        {clearable ? (
+          <button
+            type="button"
+            className="count active clearable"
+            aria-label={`${t("common.clear")} ${title}`}
+            onClick={(e) => { e.preventDefault(); e.stopPropagation(); onClear?.(); }}
+          >
+            <span className="count-num">{activeCount}</span>
+            <span className="count-clear">{t("common.clearAll")}</span>
+          </button>
+        ) : (
+          <span className={`count ${activeCount ? "active" : ""}`}>{activeCount}</span>
+        )}
       </summary>
       <div className="section-body">{children}</div>
     </details>
@@ -205,7 +220,14 @@ export function SidebarControls({
         </label>
       </div>
 
-      <FilterSection title={t("sidebar.organizations")} activeCount={orgSelection.size} open>
+      <FilterSection
+        title={t("sidebar.organizations")}
+        activeCount={orgSelection.size}
+        open
+        onClear={() => ticketMode
+          ? onActiveFiltersChange({ ...activeFilters, orgs: new Set() })
+          : onRepoFiltersChange({ ...repoFilters, orgs: new Set() })}
+      >
         <CheckList
           entries={[...orgEntries.entries()]}
           selected={orgSelection}
@@ -219,32 +241,32 @@ export function SidebarControls({
 
       {ticketMode ? (
         <>
-          <FilterSection title={t("sidebar.repositories")} activeCount={activeFilters.repos.size} dataFor={prMode ? "prs-only" : "issues-only"}>
+          <FilterSection title={t("sidebar.repositories")} activeCount={activeFilters.repos.size} dataFor={prMode ? "prs-only" : "issues-only"} onClear={() => onActiveFiltersChange({ ...activeFilters, repos: new Set() })}>
             <CheckList entries={[...activeFacets.repos.entries()]} selected={activeFilters.repos} onToggle={(value) => onActiveFiltersChange({ ...activeFilters, repos: toggleSetValue(activeFilters.repos, value) })} />
           </FilterSection>
-          <FilterSection title={t("sidebar.labels")} activeCount={activeFilters.labels.size} dataFor={prMode ? "prs-only" : "issues-only"}>
+          <FilterSection title={t("sidebar.labels")} activeCount={activeFilters.labels.size} dataFor={prMode ? "prs-only" : "issues-only"} onClear={() => onActiveFiltersChange({ ...activeFilters, labels: new Set() })}>
             <CheckList entries={[...activeFacets.labels.entries()]} selected={activeFilters.labels} showSwatch onToggle={(value) => onActiveFiltersChange({ ...activeFilters, labels: toggleSetValue(activeFilters.labels, value) })} />
           </FilterSection>
-          <FilterSection title={t("sidebar.authors")} activeCount={activeFilters.authors.size} dataFor={prMode ? "prs-only" : "issues-only"}>
+          <FilterSection title={t("sidebar.authors")} activeCount={activeFilters.authors.size} dataFor={prMode ? "prs-only" : "issues-only"} onClear={() => onActiveFiltersChange({ ...activeFilters, authors: new Set() })}>
             <CheckList entries={[...activeFacets.authors.entries()]} selected={activeFilters.authors} onToggle={(value) => onActiveFiltersChange({ ...activeFilters, authors: toggleSetValue(activeFilters.authors, value) })} />
           </FilterSection>
-          <FilterSection title={t("sidebar.assignees")} activeCount={activeFilters.assignees.size} dataFor={prMode ? "prs-only" : "issues-only"}>
+          <FilterSection title={t("sidebar.assignees")} activeCount={activeFilters.assignees.size} dataFor={prMode ? "prs-only" : "issues-only"} onClear={() => onActiveFiltersChange({ ...activeFilters, assignees: new Set() })}>
             <CheckList entries={[...activeFacets.assignees.entries()]} selected={activeFilters.assignees} onToggle={(value) => onActiveFiltersChange({ ...activeFilters, assignees: toggleSetValue(activeFilters.assignees, value) })} />
           </FilterSection>
         </>
       ) : (
         <>
-          <FilterSection title={t("sidebar.languages")} activeCount={repoFilters.languages.size} dataFor="repos-only">
+          <FilterSection title={t("sidebar.languages")} activeCount={repoFilters.languages.size} dataFor="repos-only" onClear={() => onRepoFiltersChange({ ...repoFilters, languages: new Set() })}>
             <CheckList entries={[...repoFacets.languages.entries()]} selected={repoFilters.languages} languageDot onToggle={(value) => onRepoFiltersChange({ ...repoFilters, languages: toggleSetValue(repoFilters.languages, value) })} />
           </FilterSection>
-          <FilterSection title={t("sidebar.visibility")} activeCount={repoFilters.visibility === "all" ? 0 : 1} dataFor="repos-only" open>
+          <FilterSection title={t("sidebar.visibility")} activeCount={repoFilters.visibility === "all" ? 0 : 1} dataFor="repos-only" open onClear={() => onRepoFiltersChange({ ...repoFilters, visibility: "all" })}>
             <div className="opt-group" role="tablist">
               {(["all", "public", "private"] as const).map((value) => (
                 <button key={value} className={repoFilters.visibility === value ? "active" : ""} onClick={() => onRepoFiltersChange({ ...repoFilters, visibility: value })}>{value === "all" ? t("common.all") : value === "public" ? t("sidebar.public") : t("sidebar.private")}</button>
               ))}
             </div>
           </FilterSection>
-          <FilterSection title={t("sidebar.options")} activeCount={Number(!repoFilters.includeForks) + Number(repoFilters.includeArchived)} dataFor="repos-only" open>
+          <FilterSection title={t("sidebar.options")} activeCount={Number(!repoFilters.includeForks) + Number(repoFilters.includeArchived)} dataFor="repos-only" open onClear={() => onRepoFiltersChange({ ...repoFilters, includeForks: true, includeArchived: false })}>
             <div className="toggle-row">{t("sidebar.includeForks")} <button className={`toggle ${repoFilters.includeForks ? "on" : ""}`} role="switch" aria-checked={repoFilters.includeForks} onClick={() => onRepoFiltersChange({ ...repoFilters, includeForks: !repoFilters.includeForks })} /></div>
             <div className="toggle-row">{t("sidebar.includeArchived")} <button className={`toggle ${repoFilters.includeArchived ? "on" : ""}`} role="switch" aria-checked={repoFilters.includeArchived} onClick={() => onRepoFiltersChange({ ...repoFilters, includeArchived: !repoFilters.includeArchived })} /></div>
           </FilterSection>
