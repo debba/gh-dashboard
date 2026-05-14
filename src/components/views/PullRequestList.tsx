@@ -1,7 +1,7 @@
 import type { GhPullRequest } from "../../types/github";
 import { reviewDecisionLabel } from "../../utils/dashboard";
 import { formatNumber, formatRelativeTime } from "../../utils/format";
-import { getContrastColor } from "../../utils/colors";
+import { getLabelCssVars } from "../../utils/colors";
 import { Avatar } from "../common/Avatar";
 import { PulseIcon } from "../common/Icons";
 import { useI18n } from "../../i18n/I18nProvider";
@@ -40,16 +40,12 @@ export function PullRequestList({ pullRequests }: { pullRequests: GhPullRequest[
                 <span className={`pr-badge review ${reviewBadgeClass(pr)}`}>{reviewDecisionLabel(pr.reviewDecision)}</span>
                 {stale ? <span className="stale-badge">{t("list.stale")}</span> : null}
                 {(pr.labels || []).slice(0, 3).map((label) => {
-                  const color = (label.color || "").replace("#", "");
+                  const vars = getLabelCssVars(label.color);
                   return (
                     <span
-                      className="data-label"
+                      className={vars ? "data-label gh-label" : "data-label"}
                       key={label.name}
-                      style={color ? {
-                        background: `#${color}22`,
-                        borderColor: `#${color}55`,
-                        color: getContrastColor(color) === "#0a0c12" ? "#4a3212" : "var(--text)",
-                      } : undefined}
+                      style={vars}
                     >
                       {label.name}
                     </span>

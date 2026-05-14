@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import type { GhRepo } from "../../types/github";
-import { getContrastColor } from "../../utils/colors";
+import { getLabelCssVars } from "../../utils/colors";
 import { formatNumber, formatRelativeTime } from "../../utils/format";
 import { searchInboxItems, type InboxItem } from "../../utils/inbox";
 import { clampPage } from "../../utils/pagination";
@@ -79,13 +79,12 @@ function LabelPills({ item }: { item: InboxItem }) {
   return (
     <div className="inbox-labels">
       {item.labels.map((label) => {
-        const color = (label.color || "").replace("#", "");
-        const foreground = color && getContrastColor(color) === "#0a0c12" ? "#4a3212" : "var(--text)";
+        const vars = getLabelCssVars(label.color);
         return (
           <span
-            className="inbox-label"
+            className={vars ? "inbox-label gh-label" : "inbox-label"}
             key={label.name}
-            style={color ? { background: `#${color}22`, borderColor: `#${color}55`, color: foreground } : undefined}
+            style={vars}
           >
             {label.name}
           </span>
