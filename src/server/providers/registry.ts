@@ -1,4 +1,5 @@
 import { getProviderConfig } from "../accountStore";
+import { ForgejoProvider } from "./forgejo";
 import { GitHubProvider } from "./github";
 import type { Account, Provider, ProviderConfig } from "./types";
 
@@ -9,10 +10,7 @@ function build(config: ProviderConfig): Provider {
     case "github":
       return new GitHubProvider(config);
     case "forgejo":
-      // Forgejo provider lands in PR5. Treat unknown as GitHub-compatible
-      // for the configurable bits but only the github.com config flows through
-      // this branch today.
-      throw new Error(`Provider kind 'forgejo' not yet implemented (configId=${config.id})`);
+      return new ForgejoProvider(config);
   }
 }
 

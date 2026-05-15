@@ -202,6 +202,61 @@
     background: var(--panel-2);
     color: var(--text);
   }
+  .add-account-providers {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .add-account-provider {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+    padding: 10px 12px;
+    border: 1px solid var(--border-soft);
+    border-radius: 8px;
+    background: var(--panel-2);
+    color: var(--text);
+    cursor: pointer;
+    text-align: left;
+    font-size: 13px;
+  }
+  .add-account-provider:hover {
+    border-color: var(--accent);
+  }
+  .add-account-provider-label {
+    font-weight: 700;
+  }
+  .add-account-provider-meta {
+    color: var(--muted);
+    font-size: 11.5px;
+  }
+  .add-account-token {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .add-account-field {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    color: var(--muted);
+    font-size: 11.5px;
+    font-weight: 700;
+  }
+  .add-account-field input {
+    padding: 8px 10px;
+    border: 1px solid var(--border-soft);
+    border-radius: 7px;
+    background: var(--panel-2);
+    color: var(--text);
+    font-size: 13px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
+  .add-account-field input:focus-visible {
+    outline: none;
+    box-shadow: var(--ring);
+  }
   .preferences-btn.active {
     background: var(--panel-2);
     border-color: var(--button-hover-border);
