@@ -71,6 +71,7 @@ import { formatNumber } from "./utils/format";
 import { clearStatsCache, readStatsCache, writeStatsCache } from "./utils/statsCache";
 import { clearFiltersCache, hydrateFilters, readFiltersCache, writeFiltersCache } from "./utils/filtersCache";
 import { useI18n } from "./i18n/I18nProvider";
+import { useCapability } from "./contexts/AccountContext";
 
 type Tab = "inbox" | "repos" | "issues" | "prs" | "kanban" | "insights" | "ci" | "digests";
 type Theme = "dark" | "light" | "auto";
@@ -159,6 +160,7 @@ type AuthState = "checking" | "anonymous" | "authenticated";
 
 export function App() {
   const { t } = useI18n();
+  const projectsEnabled = useCapability("projects");
   const location = useLocation();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -657,7 +659,9 @@ export function App() {
     { key: "insights" as const, label: t("tabs.insights"), count: filteredInsights.length, icon: <PulseIcon /> },
     { key: "ci" as const, label: t("tabs.ci"), count: ciHealth.length, icon: <PulseIcon /> },
     { key: "digests" as const, label: t("tabs.digest"), count: dailyDigests.length, icon: <PulseIcon /> },
-    { key: "kanban" as const, label: t("tabs.board"), count: "—", icon: <BoardIcon /> },
+    ...(projectsEnabled
+      ? [{ key: "kanban" as const, label: t("tabs.board"), count: "—", icon: <BoardIcon /> }]
+      : []),
   ];
 
   return (
@@ -885,7 +889,7 @@ export function App() {
             </div>
           ) : null}
 
-          {tab === "kanban" ? <KanbanView /> : null}
+          {tab === "kanban" && projectsEnabled ? <KanbanView /> : null}
         </main>
       </div>
       <Footer

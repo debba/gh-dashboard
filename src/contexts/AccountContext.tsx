@@ -95,3 +95,12 @@ export function useAccounts(): AccountContextValue {
   if (!value) throw new Error("useAccounts must be used inside AccountProvider");
   return value;
 }
+
+type CapabilityName = keyof NonNullable<AccountSummary["capabilities"]>;
+
+export function useCapability(name: CapabilityName, fallback = true): boolean {
+  const { active } = useAccounts();
+  if (!active) return fallback;
+  const value = active.capabilities?.[name];
+  return value === undefined ? fallback : value;
+}
