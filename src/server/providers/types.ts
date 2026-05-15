@@ -71,6 +71,49 @@ export interface ProviderIdentity {
   htmlUrl?: string | null;
 }
 
+export interface OwnersResult {
+  ok: true;
+  owners: string[];
+}
+
+export interface OwnersError {
+  ok: false;
+  error: string;
+  needsAuth?: true;
+}
+
+export type OwnersOutcome = OwnersResult | OwnersError;
+
+export interface NotificationsFetchOk {
+  ok: true;
+  refreshed: boolean;
+  notifications: import("../../types/github").GhNotification[];
+  pollInterval: number;
+  lastModified: string | null;
+}
+
+export interface NotificationsFetchError {
+  ok: false;
+  error: string;
+  needsAuth?: true;
+}
+
+export type NotificationsFetchOutcome = NotificationsFetchOk | NotificationsFetchError;
+
+export interface NotificationMutationOk {
+  ok: true;
+  status: number;
+}
+
+export interface NotificationMutationError {
+  ok: false;
+  status: number;
+  error: string;
+  needsAuth?: true;
+}
+
+export type NotificationMutationOutcome = NotificationMutationOk | NotificationMutationError;
+
 export interface Provider {
   readonly kind: ProviderKind;
   readonly config: ProviderConfig;
@@ -80,6 +123,27 @@ export interface Provider {
   pollDeviceFlow(deviceCode: string): Promise<DeviceFlowPoll>;
   fetchIdentity(token: string): Promise<ProviderIdentity>;
   loadFromGhCli?(): Promise<{ token: string } | null>;
+
+  listOwners(account: Account): Promise<OwnersOutcome>;
+  listRepos(
+    account: Account,
+    owners: string[],
+  ): Promise<import("../../types/github").GhRepo[]>;
+  listIssues(
+    account: Account,
+    owners: string[],
+  ): Promise<import("../../types/github").GhIssue[]>;
+  listPullRequests(
+    account: Account,
+    owners: string[],
+  ): Promise<import("../../types/github").GhPullRequest[]>;
+
+  fetchNotifications(account: Account, ifModifiedSince: string | null): Promise<NotificationsFetchOutcome>;
+  markNotificationRead(account: Account, threadId: string): Promise<NotificationMutationOutcome>;
+  markAllNotificationsRead(
+    account: Account,
+    options: { repo?: string | null; lastReadAt?: string | null },
+  ): Promise<NotificationMutationOutcome>;
 
   avatarUrl(login: string, size?: number): string;
   webUrlFor(kind: "user" | "repo" | "issue" | "pr", parts: Record<string, string | number>): string;

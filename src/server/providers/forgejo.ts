@@ -1,6 +1,24 @@
 import type {
+  GhIssue,
+  GhPullRequest,
+  GhRepo,
+} from "../../types/github";
+import {
+  fetchForgejoIssues,
+  fetchForgejoNotifications,
+  fetchForgejoOwners,
+  fetchForgejoPullRequests,
+  fetchForgejoRepos,
+  markForgejoAllRead,
+  markForgejoThreadRead,
+} from "./forgejoData";
+import type {
+  Account,
   DeviceFlowPoll,
   DeviceFlowStart,
+  NotificationMutationOutcome,
+  NotificationsFetchOutcome,
+  OwnersOutcome,
   Provider,
   ProviderCapabilities,
   ProviderConfig,
@@ -60,6 +78,46 @@ export class ForgejoProvider implements Provider {
       avatarUrl: data.avatar_url ?? null,
       htmlUrl: data.html_url ?? null,
     };
+  }
+
+  async listOwners(account: Account): Promise<OwnersOutcome> {
+    return fetchForgejoOwners(account);
+  }
+
+  async listRepos(account: Account, owners: string[]): Promise<GhRepo[]> {
+    return fetchForgejoRepos(account, owners);
+  }
+
+  async listIssues(account: Account, owners: string[]): Promise<GhIssue[]> {
+    return fetchForgejoIssues(account, owners);
+  }
+
+  async listPullRequests(account: Account, owners: string[]): Promise<GhPullRequest[]> {
+    return fetchForgejoPullRequests(account, owners);
+  }
+
+  async fetchNotifications(account: Account, ifModifiedSince: string | null): Promise<NotificationsFetchOutcome> {
+    const result = await fetchForgejoNotifications(account, ifModifiedSince);
+    if ("error" in result) return { ok: false, error: result.error, needsAuth: result.needsAuth };
+    return {
+      ok: true,
+      refreshed: result.refreshed,
+      notifications: result.notifications,
+      lastModified: result.lastModified,
+      pollInterval: result.pollInterval,
+    };
+  }
+
+  async markNotificationRead(account: Account, threadId: string): Promise<NotificationMutationOutcome> {
+    const result = await markForgejoThreadRead(account, threadId);
+    if (result.ok) return { ok: true, status: result.status };
+    return { ok: false, status: result.status, error: result.error, needsAuth: result.needsAuth };
+  }
+
+  async markAllNotificationsRead(account: Account, options: { repo?: string | null; lastReadAt?: string | null }): Promise<NotificationMutationOutcome> {
+    const result = await markForgejoAllRead(account, options);
+    if (result.ok) return { ok: true, status: result.status };
+    return { ok: false, status: result.status, error: result.error, needsAuth: result.needsAuth };
   }
 
   avatarUrl(login: string, size = 64): string {
