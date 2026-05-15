@@ -45,7 +45,7 @@ async function fetchLogin(token: string): Promise<{ login: string | null; scope:
     const response = await fetch(USER_URL, {
       headers: {
         Accept: "application/vnd.github+json",
-        "User-Agent": "gh-issues-dashboard",
+        "User-Agent": "gitdeck",
         Authorization: `Bearer ${token}`,
       },
     });

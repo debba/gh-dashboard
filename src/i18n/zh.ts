@@ -1,7 +1,7 @@
 import type { en } from "./en";
 
 export const zh: Record<keyof typeof en, string> = {
-  "app.title": "Git Dashboard",
+  "app.title": "Gitdeck",
   "language.label": "语言",
   "language.en": "English",
   "language.it": "Italiano",

@@ -1,5 +1,5 @@
 export const en = {
-  "app.title": "Git Dashboard",
+  "app.title": "Gitdeck",
   "language.label": "Language",
   "language.en": "English",
   "language.it": "Italiano",

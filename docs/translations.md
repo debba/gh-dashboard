@@ -73,7 +73,7 @@ Use a lowercase language code as the file name. For example, Portuguese would us
 import type { en } from "./en";
 
 export const pt: Record<keyof typeof en, string> = {
-  "app.title": "GitHub Dashboard",
+  "app.title": "Gitdeck",
   // ...
 };
 ```

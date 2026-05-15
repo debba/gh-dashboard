@@ -1,6 +1,6 @@
-import { mkdir, readFile, rename, rm, writeFile } from "node:fs/promises";
+import { access, mkdir, readFile, rename, rm, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
-import { DATA_DIR } from "./config";
+import { DATA_DIR, LEGACY_DATA_DIR } from "./config";
 import type { Account, AccountStoreData, ProviderConfig } from "./providers/types";
 
 const ACCOUNTS_PATH = resolve(DATA_DIR, "accounts.json");
@@ -20,7 +20,7 @@ const DEFAULT_PROVIDER_CONFIGS: Record<string, ProviderConfig> = {
     oauthDeviceCodeUrl: "https://github.com/login/device/code",
     oauthTokenUrl: "https://github.com/login/oauth/access_token",
     oauthScopes: "repo read:org project read:user user:email",
-    userAgent: "gh-issues-dashboard",
+    userAgent: "gitdeck",
   },
   "codeberg.org": {
     id: "codeberg.org",
@@ -31,7 +31,7 @@ const DEFAULT_PROVIDER_CONFIGS: Record<string, ProviderConfig> = {
     oauthAuthorizeUrl: "https://codeberg.org/login/oauth/authorize",
     oauthTokenUrl: "https://codeberg.org/login/oauth/access_token",
     oauthScopes: "read:repository read:notification read:user",
-    userAgent: "gh-issues-dashboard",
+    userAgent: "gitdeck",
   },
 };
 
@@ -126,7 +126,28 @@ async function backupLegacy(): Promise<void> {
   }
 }
 
+async function migrateLegacyDataDir(): Promise<void> {
+  if (DATA_DIR === LEGACY_DATA_DIR) return;
+  try {
+    await access(DATA_DIR);
+    return;
+  } catch {
+    // new dir absent — check legacy
+  }
+  try {
+    await access(LEGACY_DATA_DIR);
+  } catch {
+    return;
+  }
+  try {
+    await rename(LEGACY_DATA_DIR, DATA_DIR);
+  } catch {
+    // best-effort: leave legacy in place if rename fails
+  }
+}
+
 async function doInit(): Promise<void> {
+  await migrateLegacyDataDir();
   const existing = await readAccountsFile();
   if (existing) {
     state = { persisted: existing, ephemeral: [] };

@@ -1,7 +1,7 @@
 import type { en } from "./en";
 
 export const es: Record<keyof typeof en, string> = {
-  "app.title": "Git Dashboard",
+  "app.title": "Gitdeck",
   "language.label": "Idioma",
   "language.en": "English",
   "language.it": "Italiano",

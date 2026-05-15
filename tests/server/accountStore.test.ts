@@ -2,16 +2,19 @@ import { afterAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { mkdir, readFile, rm, stat, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
 
-const { TMP_DIR } = vi.hoisted(() => {
+const { TMP_DIR, LEGACY_TMP_DIR } = vi.hoisted(() => {
   const { tmpdir } = require("node:os") as typeof import("node:os");
   const { resolve } = require("node:path") as typeof import("node:path");
+  const base = resolve(tmpdir(), `gh-dash-accountstore-${process.pid}-${Date.now()}`);
   return {
-    TMP_DIR: resolve(tmpdir(), `gh-dash-accountstore-${process.pid}-${Date.now()}`),
+    TMP_DIR: base,
+    LEGACY_TMP_DIR: `${base}-legacy`,
   };
 });
 
 vi.mock("../../src/server/config", () => ({
   DATA_DIR: TMP_DIR,
+  LEGACY_DATA_DIR: LEGACY_TMP_DIR,
 }));
 
 const store = await import("../../src/server/accountStore");

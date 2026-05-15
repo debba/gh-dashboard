@@ -366,7 +366,7 @@ async function handleDependents(res: ServerResponse, u: URL): Promise<void> {
     const token = await getToken().catch(() => "");
     const resp = await fetch(pageUrl, {
       headers: {
-        "User-Agent": "gh-dashboard/1.0 (+local)",
+        "User-Agent": "gitdeck/1.0 (+local)",
         "Accept": "text/html",
         ...(token ? { "Authorization": `Bearer ${token}` } : {}),
       },
