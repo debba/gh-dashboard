@@ -1,6 +1,7 @@
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
-import { readToken } from "./tokenStore";
+import { getActive as getActiveAccountFromStore, init as initAccountStore } from "./accountStore";
+import type { Account } from "./providers/types";
 
 const execFileAsync = promisify(execFile);
 const USER_URL = "https://api.github.com/user";
@@ -93,6 +94,11 @@ async function loadEnvToken(): Promise<CachedToken> {
   return envCache;
 }
 
+export async function getActiveAccount(): Promise<Account | null> {
+  await initAccountStore();
+  return getActiveAccountFromStore();
+}
+
 export async function getActiveToken(): Promise<string | null> {
   const mode = getAuthMode();
   if (mode === "gh-cli") {
@@ -103,8 +109,8 @@ export async function getActiveToken(): Promise<string | null> {
     const cached = await loadEnvToken();
     return cached.token;
   }
-  const stored = await readToken();
-  return stored?.accessToken ?? null;
+  const account = await getActiveAccount();
+  return account?.accessToken ?? null;
 }
 
 export async function getProviderStatus(): Promise<ProviderStatus> {
@@ -125,9 +131,9 @@ export async function getProviderStatus(): Promise<ProviderStatus> {
       return { authenticated: false, login: null, scope: null, detail: (error as Error).message };
     }
   }
-  const stored = await readToken();
-  if (!stored) return { authenticated: false, login: null, scope: null };
-  return { authenticated: true, login: stored.login ?? null, scope: stored.scope ?? null };
+  const account = await getActiveAccount();
+  if (!account) return { authenticated: false, login: null, scope: null };
+  return { authenticated: true, login: account.login ?? null, scope: account.scope ?? null };
 }
 
 export function resetExternalAuthCaches(): void {

@@ -1,43 +1,21 @@
+import {
+  add as addAccount,
+  init as initAccountStore,
+  list as listAccounts,
+  remove as removeAccount,
+} from "./accountStore";
 import { getAuthMode, getProviderStatus, resetExternalAuthCaches } from "./authProvider";
-import { clearToken, writeToken, type StoredToken } from "./tokenStore";
+import { getProvider } from "./providers/registry";
+import type { Account } from "./providers/types";
 
-const DEVICE_CODE_URL = "https://github.com/login/device/code";
-const ACCESS_TOKEN_URL = "https://github.com/login/oauth/access_token";
-const USER_URL = "https://api.github.com/user";
-
-const DEFAULT_SCOPES = "repo read:org project read:user user:email";
+const DEFAULT_PROVIDER_ID = "github.com";
 
 interface PendingFlow {
+  providerConfigId: string;
   deviceCode: string;
-  interval: number;
-  expiresAt: number;
 }
 
 let pending: PendingFlow | null = null;
-let lastPollAt = 0;
-
-function clientId(): string {
-  const id = process.env.GITHUB_CLIENT_ID?.trim();
-  if (!id) {
-    throw new Error(
-      "GITHUB_CLIENT_ID is not set. Register an OAuth App at https://github.com/settings/developers " +
-      "(enable Device Flow) and export GITHUB_CLIENT_ID before starting the server."
-    );
-  }
-  return id;
-}
-
-function scopes(): string {
-  return process.env.GITHUB_OAUTH_SCOPES?.trim() || DEFAULT_SCOPES;
-}
-
-interface DeviceCodeResponse {
-  device_code: string;
-  user_code: string;
-  verification_uri: string;
-  expires_in: number;
-  interval: number;
-}
 
 export interface DeviceFlowStartResult {
   userCode: string;
@@ -46,49 +24,19 @@ export interface DeviceFlowStartResult {
   interval: number;
 }
 
-export async function startDeviceFlow(): Promise<DeviceFlowStartResult> {
-  const body = new URLSearchParams({ client_id: clientId(), scope: scopes() });
-  const response = await fetch(DEVICE_CODE_URL, {
-    method: "POST",
-    headers: {
-      Accept: "application/json",
-      "Content-Type": "application/x-www-form-urlencoded",
-    },
-    body,
-  });
-  const text = await response.text();
-  let parsed: Partial<DeviceCodeResponse & { error: string; error_description: string }> = {};
-  try {
-    parsed = JSON.parse(text);
-  } catch {
-    // Body is not JSON; surface the raw text in the error path below.
-  }
-  if (!response.ok || parsed.error) {
-    const detail = parsed.error_description || parsed.error || text || `HTTP ${response.status}`;
-    throw new Error(`GitHub device-code request failed: ${detail}`);
-  }
-  const data = parsed as DeviceCodeResponse;
-  pending = {
-    deviceCode: data.device_code,
-    interval: Math.max(5, data.interval || 5),
-    expiresAt: Date.now() + data.expires_in * 1000,
-  };
-  lastPollAt = 0;
+export async function startDeviceFlow(
+  providerConfigId: string = DEFAULT_PROVIDER_ID,
+): Promise<DeviceFlowStartResult> {
+  await initAccountStore();
+  const provider = await getProvider(providerConfigId);
+  const result = await provider.startDeviceFlow();
+  pending = { providerConfigId, deviceCode: result.deviceCode };
   return {
-    userCode: data.user_code,
-    verificationUri: data.verification_uri,
-    expiresIn: data.expires_in,
-    interval: data.interval,
+    userCode: result.userCode,
+    verificationUri: result.verificationUri,
+    expiresIn: result.expiresIn,
+    interval: result.interval,
   };
-}
-
-interface AccessTokenResponse {
-  access_token?: string;
-  scope?: string;
-  token_type?: string;
-  error?: string;
-  error_description?: string;
-  interval?: number;
 }
 
 export type DeviceFlowPollResult =
@@ -99,80 +47,65 @@ export type DeviceFlowPollResult =
   | { status: "error"; error: string }
   | { status: "ok"; login: string };
 
-async function fetchUserLogin(token: string): Promise<string> {
-  const response = await fetch(USER_URL, {
-    headers: {
-      Accept: "application/vnd.github+json",
-      "User-Agent": "gh-issues-dashboard",
-      Authorization: `Bearer ${token}`,
-    },
-  });
-  if (!response.ok) {
-    throw new Error(`GitHub /user request failed: HTTP ${response.status}`);
-  }
-  const data = (await response.json()) as { login?: string };
-  if (!data.login) throw new Error("GitHub /user response missing login");
-  return data.login;
+function buildAccount(
+  providerConfigId: string,
+  accessToken: string,
+  scope: string,
+  login: string,
+  kind: Account["providerKind"],
+  webHost: string,
+): Account {
+  const safeLogin = (login || "user").replace(/[^a-zA-Z0-9_-]/g, "_");
+  const prefix = kind === "github" ? "gh" : kind === "forgejo" ? "fj" : kind;
+  return {
+    id: `${prefix}_${safeLogin}_${providerConfigId}`,
+    providerKind: kind,
+    providerConfigId,
+    label: login ? `${login} (${webHost})` : webHost,
+    login: login || null,
+    accessToken,
+    scope,
+    obtainedAt: new Date().toISOString(),
+    source: "device",
+  };
 }
 
 export async function pollDeviceFlow(): Promise<DeviceFlowPollResult> {
   if (!pending) return { status: "error", error: "no pending device flow" };
-  if (Date.now() >= pending.expiresAt) {
+  const provider = await getProvider(pending.providerConfigId);
+  const result = await provider.pollDeviceFlow(pending.deviceCode);
+  if (result.status === "ok") {
+    const webHost = new URL(provider.config.webUrl).host;
+    const account = buildAccount(
+      pending.providerConfigId,
+      result.accessToken,
+      result.scope,
+      result.login,
+      provider.kind,
+      webHost,
+    );
+    await initAccountStore();
+    await addAccount(account);
     pending = null;
-    return { status: "expired" };
+    return { status: "ok", login: result.login };
   }
-  const minInterval = pending.interval * 1000;
-  if (Date.now() - lastPollAt < minInterval) return { status: "throttled" };
-  lastPollAt = Date.now();
-
-  const body = new URLSearchParams({
-    client_id: clientId(),
-    device_code: pending.deviceCode,
-    grant_type: "urn:ietf:params:oauth:grant-type:device_code",
-  });
-  const response = await fetch(ACCESS_TOKEN_URL, {
-    method: "POST",
-    headers: {
-      Accept: "application/json",
-      "Content-Type": "application/x-www-form-urlencoded",
-    },
-    body,
-  });
-  const data = (await response.json()) as AccessTokenResponse;
-
-  if (data.access_token) {
-    const login = await fetchUserLogin(data.access_token);
-    const stored: StoredToken = {
-      accessToken: data.access_token,
-      scope: data.scope ?? "",
-      obtainedAt: new Date().toISOString(),
-      login,
-    };
-    await writeToken(stored);
+  if (result.status === "expired" || result.status === "denied") {
     pending = null;
-    return { status: "ok", login };
   }
-
-  switch (data.error) {
-    case "authorization_pending":
-      return { status: "pending" };
-    case "slow_down":
-      if (data.interval) pending.interval = Math.max(pending.interval, data.interval);
-      return { status: "throttled" };
-    case "expired_token":
-      pending = null;
-      return { status: "expired" };
-    case "access_denied":
-      pending = null;
-      return { status: "denied" };
-    default:
-      return { status: "error", error: data.error_description || data.error || "unknown error" };
-  }
+  if (result.status === "throttled") return { status: "throttled" };
+  if (result.status === "pending") return { status: "pending" };
+  if (result.status === "expired") return { status: "expired" };
+  if (result.status === "denied") return { status: "denied" };
+  return { status: "error", error: result.error ?? "unknown error" };
 }
 
 export async function logout(): Promise<void> {
   pending = null;
-  await clearToken();
+  await initAccountStore();
+  const accounts = await listAccounts();
+  for (const account of accounts) {
+    if (!account.ephemeral) await removeAccount(account.id);
+  }
   resetExternalAuthCaches();
 }
 
