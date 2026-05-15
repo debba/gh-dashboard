@@ -71,8 +71,55 @@
     white-space: nowrap;
     border: 0;
   }
-  .preferences-menu {
+  .preferences-menu,
+  .account-switcher {
     position: relative;
+  }
+  .account-switcher-btn.active {
+    background: var(--panel-2);
+    border-color: var(--button-hover-border);
+  }
+  .account-switcher-popover {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    min-width: 220px;
+    padding: 6px;
+    border: 1px solid var(--border-soft);
+    border-radius: 8px;
+    background: color-mix(in srgb, var(--panel) 96%, black);
+    box-shadow: var(--shadow);
+    z-index: 40;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .account-switcher-item {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+    padding: 7px 9px;
+    border: 0;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--text);
+    cursor: pointer;
+    text-align: left;
+    font-size: 12.5px;
+  }
+  .account-switcher-item:hover {
+    background: var(--panel-2);
+  }
+  .account-switcher-item.active {
+    background: color-mix(in srgb, var(--accent) 18%, var(--panel-2));
+  }
+  .account-switcher-label {
+    font-weight: 700;
+  }
+  .account-switcher-meta {
+    color: var(--muted);
+    font-size: 11px;
   }
   .preferences-btn.active {
     background: var(--panel-2);

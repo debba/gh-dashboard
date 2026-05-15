@@ -27,6 +27,14 @@ import {
   startDeviceFlow,
 } from "./server/oauth";
 import { getAuthMode } from "./server/authProvider";
+import {
+  getActive as getActiveAccount,
+  init as initAccountStore,
+  list as listAccountsStore,
+  remove as removeAccountStore,
+  setActive as setActiveAccount,
+} from "./server/accountStore";
+import { getProviderForAccount } from "./server/providers/registry";
 import { send, sendJson, sendJsonCacheable, sendStaticFile } from "./server/http";
 import {
   getNotificationsCached,
@@ -838,6 +846,85 @@ async function handleAuthLogout(req: IncomingMessage, res: ServerResponse): Prom
   sendJson(res, 200, { ok: true });
 }
 
+/* ===================== ACCOUNTS ===================== */
+
+interface AccountSummary {
+  id: string;
+  providerKind: string;
+  providerConfigId: string;
+  label: string;
+  login: string | null;
+  scope: string;
+  source: string;
+  ephemeral: boolean;
+  active: boolean;
+  capabilities: Record<string, boolean>;
+}
+
+async function summariseAccount(account: Awaited<ReturnType<typeof getActiveAccount>>, activeId: string | null): Promise<AccountSummary | null> {
+  if (!account) return null;
+  let capabilities: Record<string, boolean> = {};
+  try {
+    const provider = await getProviderForAccount(account);
+    capabilities = { ...provider.capabilities };
+  } catch {
+    // Unknown provider kind — return empty caps; UI will treat as conservative.
+  }
+  return {
+    id: account.id,
+    providerKind: account.providerKind,
+    providerConfigId: account.providerConfigId,
+    label: account.label,
+    login: account.login,
+    scope: account.scope,
+    source: account.source,
+    ephemeral: Boolean(account.ephemeral),
+    active: account.id === activeId,
+    capabilities,
+  };
+}
+
+async function handleAccountsList(res: ServerResponse): Promise<void> {
+  await initAccountStore();
+  const all = await listAccountsStore();
+  const active = await getActiveAccount();
+  const summaries: AccountSummary[] = [];
+  for (const account of all) {
+    const summary = await summariseAccount(account, active?.id ?? null);
+    if (summary) summaries.push(summary);
+  }
+  sendJson(res, 200, { ok: true, accounts: summaries, activeId: active?.id ?? null });
+}
+
+async function handleAccountActivate(req: IncomingMessage, res: ServerResponse): Promise<void> {
+  if (req.method !== "POST") return sendJson(res, 405, { ok: false, error: "POST required" });
+  let parsed: { id?: string };
+  try { parsed = (await readJsonBody(req)) as { id?: string }; }
+  catch { return sendJson(res, 400, { ok: false, error: "invalid JSON" }); }
+  const id = (parsed.id || "").trim();
+  if (!id) return sendJson(res, 400, { ok: false, error: "missing id" });
+  await initAccountStore();
+  const account = await setActiveAccount(id);
+  if (!account) return sendJson(res, 404, { ok: false, error: "account not found" });
+  invalidateDataCache();
+  invalidateNotificationsCache();
+  invalidateCIHealthCache();
+  sendJson(res, 200, { ok: true, activeId: account.id });
+}
+
+async function handleAccountRemove(req: IncomingMessage, res: ServerResponse, u: URL): Promise<void> {
+  if (req.method !== "DELETE") return sendJson(res, 405, { ok: false, error: "DELETE required" });
+  const id = (u.searchParams.get("id") || "").trim();
+  if (!id) return sendJson(res, 400, { ok: false, error: "missing id" });
+  await initAccountStore();
+  const existed = await removeAccountStore(id);
+  if (!existed) return sendJson(res, 404, { ok: false, error: "account not found" });
+  invalidateDataCache();
+  invalidateNotificationsCache();
+  invalidateCIHealthCache();
+  sendJson(res, 200, { ok: true });
+}
+
 /* ===================== NOTIFICATIONS ===================== */
 
 async function handleNotifications(req: IncomingMessage, res: ServerResponse, u: URL): Promise<void> {
@@ -942,6 +1029,13 @@ async function handle(req: IncomingMessage, res: ServerResponse): Promise<void> 
   if (url.startsWith("/api/auth/start")) return handleAuthStart(req, res);
   if (url.startsWith("/api/auth/poll")) return handleAuthPoll(req, res);
   if (url.startsWith("/api/auth/logout")) return handleAuthLogout(req, res);
+  if (url.startsWith("/api/accounts/activate")) return handleAccountActivate(req, res);
+  if (url.startsWith("/api/accounts")) {
+    if (req.method === "DELETE") {
+      return handleAccountRemove(req, res, new URL(url, "http://localhost"));
+    }
+    return handleAccountsList(res);
+  }
   if (url.startsWith("/api/stargazers")) {
     return handleStargazers(res, new URL(url, "http://localhost"));
   }

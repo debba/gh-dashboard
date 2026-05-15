@@ -20,6 +20,8 @@ export const it: Record<keyof typeof en, string> = {
   "common.closeFilters": "Chiudi filtri",
   "common.signOut": "Esci",
   "common.signedIn": "Accesso effettuato",
+  "accounts.switch": "Cambia account",
+  "accounts.select": "Seleziona account",
   "common.authenticated": "Autenticato",
   "common.authenticatedExternally": "Autenticato esternamente",
   "common.export": "Esporta",
