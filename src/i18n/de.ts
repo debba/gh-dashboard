@@ -1,7 +1,7 @@
 import type { en } from "./en";
 
 export const de: Record<keyof typeof en, string> = {
-  "app.title": "GitHub Dashboard",
+  "app.title": "Git Dashboard",
   "language.label": "Sprache",
   "language.en": "English",
   "language.it": "Italiano",
@@ -178,8 +178,10 @@ export const de: Record<keyof typeof en, string> = {
   "preset.authoredMe": "Von mir erstellt",
   "preset.stale": "Inaktiv",
   "confirm.markAllRead": "{count} GitHub-Benachrichtigung(en) als gelesen markieren?",
-  "auth.signIn": "Mit GitHub anmelden",
-  "auth.description": "Dieses Dashboard liest deine Repositories und Issues über die GitHub API. Autorisiere die App, um fortzufahren.",
+  "auth.signIn": "Account verbinden",
+  "auth.description": "Füge GitHub oder eine Forgejo-kompatible Instanz (Codeberg, selbst gehostet) hinzu, um Repositories, Issues und Benachrichtigungen zu lesen.",
+  "auth.brandTag": "Multi-Account-Dashboard",
+  "auth.changeProvider": "Provider wechseln",
   "auth.ghCliNotReady": "Authentifizierung über gh CLI ist nicht bereit.",
   "auth.tokenMissing": "GITHUB_TOKEN ist nicht verfügbar.",
   "auth.ghCliHelp": "Der Server ist mit GH_AUTH_MODE=gh-cli konfiguriert. Stelle sicher, dass gh CLI installiert ist und du angemeldet bist:",
@@ -187,9 +189,9 @@ export const de: Record<keyof typeof en, string> = {
   "auth.tokenHelp": "Der Server ist mit GH_AUTH_MODE=token konfiguriert. Exportiere ein Personal Access Token als GITHUB_TOKEN und starte den Server neu.",
   "auth.clientMissing": "GITHUB_CLIENT_ID ist nicht gesetzt.",
   "auth.clientHelp": "Registriere eine OAuth App unter github.com/settings/developers, aktiviere Device Flow, exportiere GITHUB_CLIENT_ID und starte den Server neu. Alternativ setze GH_AUTH_MODE=gh-cli, um deine lokale gh CLI Sitzung zu verwenden, oder GH_AUTH_MODE=token mit einem GITHUB_TOKEN.",
-  "auth.continue": "Mit GitHub fortfahren",
+  "auth.continue": "Fortfahren",
   "auth.requestingCode": "Gerätecode wird angefordert...",
-  "auth.openVerification": "Öffne die GitHub-Verifizierungsseite und gib den Code unten ein.",
+  "auth.openVerification": "Öffne die Verifizierungsseite des Providers und gib den Code unten ein.",
   "auth.copied": "Kopiert",
   "auth.copy": "Kopieren",
   "auth.waiting": "Warte auf Autorisierung...",

@@ -1,7 +1,7 @@
 import type { en } from "./en";
 
 export const es: Record<keyof typeof en, string> = {
-  "app.title": "GitHub Dashboard",
+  "app.title": "Git Dashboard",
   "language.label": "Idioma",
   "language.en": "English",
   "language.it": "Italiano",
@@ -178,8 +178,10 @@ export const es: Record<keyof typeof en, string> = {
   "preset.authoredMe": "Creadas por mí",
   "preset.stale": "Inactivas",
   "confirm.markAllRead": "¿Marcar {count} notificación(es) como leída(s) en GitHub?",
-  "auth.signIn": "Iniciar sesión con GitHub",
-  "auth.description": "Este dashboard lee tus repositorios e issues mediante la API de GitHub. Autoriza la app para continuar.",
+  "auth.signIn": "Conecta una cuenta",
+  "auth.description": "Añade GitHub o una instancia compatible con Forgejo (Codeberg, autohospedada) para leer repositorios, issues y notificaciones.",
+  "auth.brandTag": "Dashboard multi-cuenta",
+  "auth.changeProvider": "Cambiar proveedor",
   "auth.ghCliNotReady": "La autenticación con gh CLI no está lista.",
   "auth.tokenMissing": "GITHUB_TOKEN no está disponible.",
   "auth.ghCliHelp": "El servidor está configurado con GH_AUTH_MODE=gh-cli. Asegúrate de que gh CLI esté instalada y hayas iniciado sesión:",
@@ -187,9 +189,9 @@ export const es: Record<keyof typeof en, string> = {
   "auth.tokenHelp": "El servidor está configurado con GH_AUTH_MODE=token. Exporta un personal access token como GITHUB_TOKEN y reinicia el servidor.",
   "auth.clientMissing": "GITHUB_CLIENT_ID no está definido.",
   "auth.clientHelp": "Registra una OAuth App en github.com/settings/developers, habilita Device Flow, luego exporta GITHUB_CLIENT_ID y reinicia el servidor. También puedes usar GH_AUTH_MODE=gh-cli para reutilizar tu sesión local de gh CLI, o GH_AUTH_MODE=token con un GITHUB_TOKEN.",
-  "auth.continue": "Continuar con GitHub",
+  "auth.continue": "Continuar",
   "auth.requestingCode": "Solicitando código del dispositivo...",
-  "auth.openVerification": "Abre la página de verificación de GitHub e introduce el código inferior.",
+  "auth.openVerification": "Abre la página de verificación del proveedor e introduce el código inferior.",
   "auth.copied": "Copiado",
   "auth.copy": "Copiar",
   "auth.waiting": "Esperando autorización...",

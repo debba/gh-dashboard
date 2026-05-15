@@ -1,7 +1,7 @@
 import type { en } from "./en";
 
 export const it: Record<keyof typeof en, string> = {
-  "app.title": "GitHub Dashboard",
+  "app.title": "Git Dashboard",
   "language.label": "Lingua",
   "language.en": "English",
   "language.it": "Italiano",
@@ -178,8 +178,10 @@ export const it: Record<keyof typeof en, string> = {
   "preset.authoredMe": "Create da me",
   "preset.stale": "Inattive",
   "confirm.markAllRead": "Vuoi segnare {count} notifica{plural} come lette su GitHub?",
-  "auth.signIn": "Accedi con GitHub",
-  "auth.description": "Questa dashboard legge i tuoi repository e le issue tramite l'API di GitHub. Autorizza l'app per continuare.",
+  "auth.signIn": "Connetti un account",
+  "auth.description": "Aggiungi GitHub o un'istanza Forgejo (Codeberg, self-hosted) per leggere repository, issue e notifiche.",
+  "auth.brandTag": "Dashboard multi-account",
+  "auth.changeProvider": "Cambia provider",
   "auth.ghCliNotReady": "L'autenticazione tramite gh CLI non è pronta.",
   "auth.tokenMissing": "GITHUB_TOKEN non è disponibile.",
   "auth.ghCliHelp": "Il server è configurato con GH_AUTH_MODE=gh-cli. Verifica che gh CLI sia installato e di aver effettuato l'accesso:",
@@ -187,9 +189,9 @@ export const it: Record<keyof typeof en, string> = {
   "auth.tokenHelp": "Il server è configurato con GH_AUTH_MODE=token. Esporta un personal access token come GITHUB_TOKEN e riavvia il server.",
   "auth.clientMissing": "GITHUB_CLIENT_ID non è impostato.",
   "auth.clientHelp": "Registra una OAuth App su github.com/settings/developers, abilita il Device Flow, poi esporta GITHUB_CLIENT_ID e riavvia il server. In alternativa, imposta GH_AUTH_MODE=gh-cli per riutilizzare la sessione locale di gh CLI, oppure GH_AUTH_MODE=token con un GITHUB_TOKEN.",
-  "auth.continue": "Continua con GitHub",
+  "auth.continue": "Continua",
   "auth.requestingCode": "Richiesta codice dispositivo...",
-  "auth.openVerification": "Apri la pagina di verifica di GitHub e inserisci il codice qui sotto.",
+  "auth.openVerification": "Apri la pagina di verifica del provider e inserisci il codice qui sotto.",
   "auth.copied": "Copiato",
   "auth.copy": "Copia",
   "auth.waiting": "In attesa di autorizzazione...",

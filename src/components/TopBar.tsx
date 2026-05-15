@@ -80,7 +80,7 @@ export function TopBar({
           ))}
         </div>
         <div className="texts">
-          <h1>GitHub Dashboard</h1>
+          <h1>{t("app.title")}</h1>
           <div className="sub">{subtitle}</div>
         </div>
       </div>
