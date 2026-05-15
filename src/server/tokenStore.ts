@@ -2,6 +2,12 @@ import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { DATA_DIR } from "./config";
 
+/**
+ * @deprecated Legacy single-account token storage. New code must use
+ * `accountStore` instead. This module is kept to support backwards-compatible
+ * tooling and tests; production paths no longer call it.
+ */
+
 const TOKEN_PATH = resolve(DATA_DIR, "auth.json");
 
 export interface StoredToken {

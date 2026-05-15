@@ -98,6 +98,71 @@ export function logoutAuth(): Promise<{ ok: true }> {
   return readJson<{ ok: true }>("/api/auth/logout", { method: "POST" });
 }
 
+export interface AccountSummary {
+  id: string;
+  providerKind: "github" | "forgejo";
+  providerConfigId: string;
+  label: string;
+  login: string | null;
+  scope: string;
+  source: "device" | "gh-cli" | "token" | "env";
+  ephemeral: boolean;
+  active: boolean;
+  capabilities: {
+    graphql?: boolean;
+    notifications?: boolean;
+    projects?: boolean;
+    ciWorkflows?: boolean;
+    codeSearch?: boolean;
+    dependents?: boolean;
+    traffic?: boolean;
+    stargazerHistory?: boolean;
+  };
+}
+
+export interface AccountsList {
+  ok: true;
+  accounts: AccountSummary[];
+  activeId: string | null;
+}
+
+export function fetchAccounts(): Promise<AccountsList> {
+  return readJson<AccountsList>("/api/accounts");
+}
+
+export function activateAccount(id: string): Promise<{ ok: true; activeId: string }> {
+  return readJson("/api/accounts/activate", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ id }),
+  });
+}
+
+export function removeAccount(id: string): Promise<{ ok: true }> {
+  const query = new URLSearchParams({ id });
+  return readJson(`/api/accounts?${query.toString()}`, { method: "DELETE" });
+}
+
+export interface ProviderConfigSummary {
+  id: string;
+  kind: "github" | "forgejo";
+  label: string;
+  webUrl: string;
+  supportsDeviceFlow: boolean;
+}
+
+export function fetchProviderConfigs(): Promise<{ ok: true; configs: ProviderConfigSummary[] }> {
+  return readJson<{ ok: true; configs: ProviderConfigSummary[] }>("/api/provider-configs");
+}
+
+export function addTokenAccount(payload: { providerConfigId: string; token: string; label?: string }): Promise<{ ok: true; accountId: string }> {
+  return readJson("/api/accounts/add-token", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+}
+
 export function fetchRepos(fresh = false, signal?: AbortSignal): Promise<ReposData> {
   return readJson<ReposData>(`/api/repos${fresh ? "?fresh=1" : ""}`, withSignal(signal), "/api/repos");
 }

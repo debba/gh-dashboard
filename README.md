@@ -1,6 +1,4 @@
-# gh-dashboard
-
-> `gh-dashboard` is a working name. The final project name will be picked together with the community — share your suggestion in the [naming discussion](https://github.com/debba/gh-dashboard/discussions/1) or on Discord.
+# Gitdeck
 
 > The initial scaffolding of this repository was produced in an AI-assisted session with [Claude Code](https://claude.com/claude-code). From here on, code is reviewed and maintained by humans, and contributions are welcome.
 
@@ -12,12 +10,12 @@
   <a href="https://repostars.dev/?repos=debba%2Fgh-dashboard&theme=dark"><img src="https://repostars.dev/api/embed?repo=debba%2Fgh-dashboard&theme=dark" alt="RepoStars" /></a>
 </p>
 
-An open-source dashboard to explore your GitHub repositories, issues, pull requests, traffic, and CI activity from a single interface.
+An open-source, local dashboard to explore repositories, issues, pull requests, traffic, and CI activity across multiple accounts on GitHub and Forgejo-compatible forges (Codeberg, self-hosted) — from a single interface.
 
 ## Demo
 
 <div align="center">
-  <img src="public/demo.gif" alt="gh-dashboard demo" />
+  <img src="public/demo.gif" alt="Gitdeck demo" />
 </div>
 
 ## What it does
@@ -49,7 +47,7 @@ Open any repository to see:
 
 The app is a single repository with two cooperating processes:
 
-- **Backend** — a Node HTTP server (`src/server.ts` + `src/server/*`) that handles GitHub OAuth (Device Flow), proxies all REST/GraphQL calls, caches responses on disk, and exposes a small JSON API under `/api/*`. The GitHub token is stored locally under `~/.gh-issues-dashboard/` and **never exposed to the browser**.
+- **Backend** — a Node HTTP server (`src/server.ts` + `src/server/*`) that handles GitHub OAuth (Device Flow), proxies all REST/GraphQL calls, caches responses on disk, and exposes a small JSON API under `/api/*`. The GitHub token is stored locally under `~/.gitdeck/` and **never exposed to the browser**.
 - **Frontend** — a React 19 + Vite SPA (`src/main.tsx`, `src/App.tsx`, `src/components/*`, `src/api/*`) that consumes the backend's `/api/*` endpoints.
 
 In production both are served by the Node process: Vite builds the SPA into `dist/client/` and the server falls back to `index.html` for non-API routes.
@@ -83,7 +81,7 @@ The dashboard talks to GitHub using a personal **OAuth App** with the **Device A
 1. Go to <https://github.com/settings/developers> → **OAuth Apps** → **New OAuth App**.
    (For an org-owned app, use **Settings → Developer settings → OAuth Apps** on the organization instead.)
 2. Fill in the form:
-   - **Application name** — anything, e.g. `gh-dashboard (local)`.
+   - **Application name** — anything, e.g. `Gitdeck (local)`.
    - **Homepage URL** — `http://127.0.0.1:8765` (or any URL you control; this is informational).
    - **Authorization callback URL** — `http://127.0.0.1:8765` will do. Device Flow does not actually use a redirect, but GitHub requires the field.
 3. Click **Register application**.
@@ -111,9 +109,9 @@ When you open the dashboard for the first time, it will:
 1. call the backend, which asks GitHub for a **device code**;
 2. show you a short **user code** and a verification URL (typically <https://github.com/login/device>);
 3. you paste the code on GitHub and approve the requested scopes;
-4. the backend exchanges the device code for an access token and stores it in `~/.gh-issues-dashboard/` — **the token never reaches the browser**.
+4. the backend exchanges the device code for an access token and stores it in `~/.gitdeck/` — **the token never reaches the browser**.
 
-Granted scopes default to `repo read:org project read:user user:email`. To narrow them, set `GITHUB_OAUTH_SCOPES` (see [Configuration](#configuration)). If you ever want to revoke access, remove the app from <https://github.com/settings/applications> and delete the local token file under `~/.gh-issues-dashboard/`.
+Granted scopes default to `repo read:org project read:user user:email`. To narrow them, set `GITHUB_OAUTH_SCOPES` (see [Configuration](#configuration)). If you ever want to revoke access, remove the app from <https://github.com/settings/applications> and delete the local token file under `~/.gitdeck/`.
 
 ## Configuration
 
@@ -134,13 +132,13 @@ The server reads its configuration from environment variables:
 
 The dashboard can obtain a GitHub token in three different ways. Pick the one that fits your setup:
 
-- **`device` (default)** — OAuth App + Device Flow, as described above. The token is stored under `~/.gh-issues-dashboard/` and refreshed via the in-app sign-in screen. Requires `GITHUB_CLIENT_ID`.
+- **`device` (default)** — OAuth App + Device Flow, as described above. The token is stored under `~/.gitdeck/` and refreshed via the in-app sign-in screen. Requires `GITHUB_CLIENT_ID`.
 - **`gh-cli`** — if you already use the [GitHub CLI](https://cli.github.com/), set `GH_AUTH_MODE=gh-cli` and the server will read the token by running `gh auth token` on each request (cached in-process for 60s). No OAuth App is needed; the scopes are whatever your `gh` session already has. Run `gh auth refresh -h github.com -s repo,read:org,project` if you need extra scopes.
 - **`token`** — bring-your-own personal access token. Set `GH_AUTH_MODE=token` and export `GITHUB_TOKEN=<your-pat>`. Useful for headless / CI-style deployments.
 
 In `gh-cli` and `token` modes the device-flow sign-in screen is hidden; the server treats the configured source as authoritative.
 
-Tokens and snapshots are persisted under `~/.gh-issues-dashboard/`.
+Tokens and snapshots are persisted under `~/.gitdeck/`. If you previously ran an older build that stored data in `~/.gh-issues-dashboard/`, the server migrates it automatically on first start.
 
 ### Quick env setup
 
@@ -196,7 +194,7 @@ Then open <http://127.0.0.1:8765>.
 
 ## Run with Docker
 
-A multi-stage `Dockerfile` and a `docker-compose.yml` are provided. The image builds the server + SPA bundle and runs as a non-root user; tokens and snapshots are persisted to a named volume mounted at `/home/node/.gh-issues-dashboard`.
+A multi-stage `Dockerfile` and a `docker-compose.yml` are provided. The image builds the server + SPA bundle and runs as a non-root user; tokens and snapshots are persisted to a named volume mounted at `/home/node/.gitdeck`.
 
 With Docker Compose (recommended):
 
@@ -216,16 +214,16 @@ docker compose up -d --build
 With plain Docker:
 
 ```bash
-docker build -t gh-dashboard .
-docker run -d --name gh-dashboard \
+docker build -t gitdeck .
+docker run -d --name gitdeck \
   -p 8765:8765 \
   -e GITHUB_CLIENT_ID=Iv1.xxxxxxxxxxxxxxxx \
   -e OPENAI_API_KEY=sk-... \
-  -v gh-dashboard-data:/home/node/.gh-issues-dashboard \
-  gh-dashboard
+  -v gitdeck-data:/home/node/.gitdeck \
+  gitdeck
 ```
 
-The container forwards `GITHUB_CLIENT_ID`, `GITHUB_OAUTH_SCOPES`, `OPENAI_API_KEY` and `OPENAI_DIGEST_MODEL` from the host environment (or `.env` with Compose) — see [Configuration](#configuration) for the full list. It sets `HOST=0.0.0.0` so the server is reachable from outside. To wipe the stored token (full logout) remove the volume: `docker volume rm gh-dashboard-data`.
+The container forwards `GITHUB_CLIENT_ID`, `GITHUB_OAUTH_SCOPES`, `OPENAI_API_KEY` and `OPENAI_DIGEST_MODEL` from the host environment (or `.env` with Compose) — see [Configuration](#configuration) for the full list. It sets `HOST=0.0.0.0` so the server is reachable from outside. To wipe the stored token (full logout) remove the volume: `docker volume rm gitdeck-data`.
 
 ## Test & type-check
 
@@ -266,7 +264,6 @@ Early scaffolding. APIs, modules, and the UI are still being shaped — expect r
 ## Community
 
 - [Discord server](https://discord.gg/YrZPHAwMSG) — suggest features, report issues, or just say hi.
-- [Help name the project](https://github.com/debba/gh-dashboard/discussions/1) — open discussion for naming suggestions.
 
 ## Contributing
 

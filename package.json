@@ -1,9 +1,9 @@
 {
-  "name": "gh-issues-dashboard",
+  "name": "gitdeck",
   "version": "1.0.2",
   "private": true,
   "type": "module",
-  "description": "Local dashboard showing open issues across your GitHub repositories using GitHub OAuth.",
+  "description": "Local multi-account dashboard for GitHub and Forgejo-compatible forges (Codeberg, self-hosted).",
   "scripts": {
     "api": "tsx watch src/server.ts",
     "dev": "concurrently \"npm:api\" \"vite --host 127.0.0.1\"",

@@ -11,7 +11,8 @@ export const CLIENT_DIR = resolve(PROJECT_ROOT, "dist", "client");
 export const CLIENT_INDEX_PATH = resolve(CLIENT_DIR, "index.html");
 export const SOURCE_INDEX_PATH = resolve(PROJECT_ROOT, "index.html");
 
-export const DATA_DIR = resolve(homedir(), ".gh-issues-dashboard");
+export const DATA_DIR = resolve(homedir(), ".gitdeck");
+export const LEGACY_DATA_DIR = resolve(homedir(), ".gh-issues-dashboard");
 export const SNAPSHOTS_PATH = resolve(DATA_DIR, "snapshots.json");
 export const DIGESTS_PATH = resolve(DATA_DIR, "daily-digests.json");
 

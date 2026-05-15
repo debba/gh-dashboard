@@ -71,8 +71,191 @@
     white-space: nowrap;
     border: 0;
   }
-  .preferences-menu {
+  .preferences-menu,
+  .account-switcher {
     position: relative;
+  }
+  .account-switcher-btn.active {
+    background: var(--panel-2);
+    border-color: var(--button-hover-border);
+  }
+  .account-switcher-popover {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    min-width: 220px;
+    padding: 6px;
+    border: 1px solid var(--border-soft);
+    border-radius: 8px;
+    background: color-mix(in srgb, var(--panel) 96%, black);
+    box-shadow: var(--shadow);
+    z-index: 40;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .account-switcher-item {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 2px;
+    padding: 7px 9px;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--text);
+    cursor: pointer;
+    text-align: left;
+    font-size: 12.5px;
+  }
+  .account-switcher-item:hover {
+    background: var(--panel-2);
+  }
+  .account-switcher-item.active {
+    background: color-mix(in srgb, var(--accent) 18%, var(--panel-2));
+  }
+  .account-switcher-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+  .account-switcher-label {
+    font-weight: 700;
+  }
+  .account-switcher-meta {
+    color: var(--muted);
+    font-size: 11px;
+  }
+  .account-switcher-remove {
+    border: 0;
+    background: transparent;
+    color: var(--muted);
+    cursor: pointer;
+    padding: 0 4px;
+    font-size: 16px;
+    line-height: 1;
+    border-radius: 4px;
+  }
+  .account-switcher-remove:hover {
+    background: color-mix(in srgb, var(--danger, #f87171) 20%, transparent);
+    color: var(--danger, #f87171);
+  }
+  .account-switcher-add {
+    margin-top: 4px;
+    padding: 8px 9px;
+    border: 0;
+    border-top: 1px solid var(--border-soft);
+    border-radius: 0 0 6px 6px;
+    background: transparent;
+    color: var(--accent);
+    cursor: pointer;
+    text-align: left;
+    font-size: 12.5px;
+    font-weight: 700;
+  }
+  .account-switcher-add:hover {
+    background: var(--panel-2);
+  }
+  .add-account-backdrop {
+    position: fixed;
+    inset: 0;
+    background: color-mix(in srgb, black 55%, transparent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 80;
+    padding: 16px;
+  }
+  .add-account-card {
+    width: min(420px, 100%);
+    padding: 20px;
+    border: 1px solid var(--border-soft);
+    border-radius: 10px;
+    background: var(--panel);
+    box-shadow: var(--shadow);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .add-account-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .add-account-header h2 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 700;
+  }
+  .add-account-close {
+    border: 0;
+    background: transparent;
+    color: var(--muted);
+    font-size: 22px;
+    line-height: 1;
+    cursor: pointer;
+    padding: 0 6px;
+    border-radius: 4px;
+  }
+  .add-account-close:hover {
+    background: var(--panel-2);
+    color: var(--text);
+  }
+  .add-account-providers {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .add-account-provider {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+    padding: 10px 12px;
+    border: 1px solid var(--border-soft);
+    border-radius: 8px;
+    background: var(--panel-2);
+    color: var(--text);
+    cursor: pointer;
+    text-align: left;
+    font-size: 13px;
+  }
+  .add-account-provider:hover {
+    border-color: var(--accent);
+  }
+  .add-account-provider-label {
+    font-weight: 700;
+  }
+  .add-account-provider-meta {
+    color: var(--muted);
+    font-size: 11.5px;
+  }
+  .add-account-token {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .add-account-field {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    color: var(--muted);
+    font-size: 11.5px;
+    font-weight: 700;
+  }
+  .add-account-field input {
+    padding: 8px 10px;
+    border: 1px solid var(--border-soft);
+    border-radius: 7px;
+    background: var(--panel-2);
+    color: var(--text);
+    font-size: 13px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
+  .add-account-field input:focus-visible {
+    outline: none;
+    box-shadow: var(--ring);
   }
   .preferences-btn.active {
     background: var(--panel-2);

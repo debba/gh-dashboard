@@ -2,7 +2,7 @@ import { getActiveToken } from "./authProvider";
 
 const API_ROOT = "https://api.github.com";
 const GRAPHQL_URL = `${API_ROOT}/graphql`;
-const USER_AGENT = "gh-issues-dashboard";
+const USER_AGENT = "gitdeck";
 
 export class AuthRequiredError extends Error {
   constructor(message = "authentication required") {

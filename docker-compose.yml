@@ -1,8 +1,8 @@
 services:
-  gh-dashboard:
+  gitdeck:
     build: .
-    image: gh-dashboard:latest
-    container_name: gh-dashboard
+    image: gitdeck:latest
+    container_name: gitdeck
     restart: unless-stopped
     ports:
       - "8765:8765"
@@ -12,7 +12,7 @@ services:
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       OPENAI_DIGEST_MODEL: ${OPENAI_DIGEST_MODEL:-}
     volumes:
-      - gh-dashboard-data:/home/node/.gh-issues-dashboard
+      - gitdeck-data:/home/node/.gitdeck
 
 volumes:
-  gh-dashboard-data:
+  gitdeck-data:

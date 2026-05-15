@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import appLogo from "../assets/app-logo-mark.svg";
 import { useI18n } from "../i18n/I18nProvider";
 import type { Language } from "../utils/i18n";
+import { AccountSwitcher } from "./AccountSwitcher";
 
 type Theme = "dark" | "light" | "auto";
 type TextSize = "small" | "normal" | "large";
@@ -79,13 +80,14 @@ export function TopBar({
           ))}
         </div>
         <div className="texts">
-          <h1>GitHub Dashboard</h1>
+          <h1>{t("app.title")}</h1>
           <div className="sub">{subtitle}</div>
         </div>
       </div>
       <div className="spacer" />
       <div className="topbar-actions">
         <span className="meta">{lastUpdated}</span>
+        <AccountSwitcher />
         <button className="btn search-btn" aria-label={t("common.searchShortcut")} title={t("common.searchShortcut")} onClick={onOpenPalette}>
           <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="7" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></svg>
           <span className="label">{t("common.search")}</span>
